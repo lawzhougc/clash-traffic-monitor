@@ -1,0 +1,2130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenClash 节点流量监控 - iStoreOS</title>
+    <!-- 网页独立高清 Favicon 图标 -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%232563eb'/%3E%3Cstop offset='100%25' stop-color='%236366f1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cpath d='M18 4L7 17h7l-2 11 11-13h-7l2-11z' fill='%23ffffff'/%3E%3C/svg%3E">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        };
+        // 页面极速防闪白初始化
+        if (localStorage.getItem('op_traffic_theme') === 'dark' || (!('op_traffic_theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    <!-- Vue 3 -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <!-- ECharts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <style>
+        [v-cloak] { display: none; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 antialiased overflow-hidden font-sans transition-colors duration-150">
+<div id="app" v-cloak class="flex h-screen w-full overflow-hidden">
+    <!-- ================= 左侧侧边栏导航 (可一键收起/展开，两字极简菜单) ================= -->
+    <aside :class="sidebarCollapsed ? 'w-20 min-w-[5rem] max-w-[5rem]' : 'w-60 min-w-[15rem] max-w-[15rem]'"
+           class="bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between shrink-0 shadow-sm z-30 select-none transition-all duration-300">
+        <div>
+            <!-- 系统品牌与折叠按钮 (收起时图标完全居中，杜绝遮挡裁切) -->
+            <div v-if="sidebarCollapsed" class="h-16 border-b border-slate-100 dark:border-slate-800 flex items-center justify-center">
+                <button @click="toggleSidebar" 
+                        title="点击展开完整菜单" 
+                        class="group flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/20 hover:scale-105 transition cursor-pointer">
+                    <svg class="w-5 h-5 group-hover:hidden transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    <svg class="w-5 h-5 hidden group-hover:block transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+            </div>
+            <div v-else class="h-16 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between px-4">
+                <div class="flex items-center space-x-3 overflow-hidden">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    <div class="min-w-0 transition-opacity duration-200">
+                        <div class="text-sm font-bold text-slate-900 dark:text-white dark:text-white truncate tracking-tight">OpenClash</div>
+                        <div class="text-[11px] text-emerald-600 flex items-center space-x-1 font-medium truncate">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>iStoreOS 监控</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button @click="toggleSidebar" 
+                        class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition" 
+                        title="收起菜单">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- 导航菜单 (两字极简) -->
+            <div class="p-2.5">
+                <div v-show="!sidebarCollapsed" class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 py-2">
+                    菜单
+                </div>
+                <nav class="space-y-1">
+                    <button v-for="t in tabs" :key="t.key" @click="switchTab(t.key)"
+                            :title="sidebarCollapsed ? t.label : ''"
+                            :class="[
+                                currentTab === t.key ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-bold shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:text-white dark:hover:text-white font-medium',
+                                sidebarCollapsed ? 'justify-center px-0' : 'px-3.5 space-x-3'
+                            ]"
+                            class="w-full flex items-center py-2.5 rounded-xl transition text-left text-sm group relative">
+                        <span class="transition-transform group-hover:scale-110 shrink-0" :class="currentTab === t.key ? 'text-blue-600' : 'text-slate-400'">
+                            <component :is="t.iconComponent"></component>
+                        </span>
+                        <span v-show="!sidebarCollapsed" class="flex-1 truncate tracking-wider font-semibold">{{ t.label }}</span>
+                        <span v-if="!sidebarCollapsed && t.badge !== undefined && t.badge > 0" 
+                              class="text-[10px] px-1.5 py-0.5 rounded-full font-bold ml-1 transition shrink-0"
+                              :class="currentTab === t.key ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'">
+                            {{ t.badge }}
+                        </span>
+                        <span v-if="sidebarCollapsed && currentTab === t.key" class="absolute right-1 w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- 侧边栏底部系统信息卡片 -->
+        <div v-show="!sidebarCollapsed" class="p-3.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 text-xs text-slate-500 dark:text-slate-400 space-y-1.5 transition-all">
+            <div class="flex items-center justify-between">
+                <span>旁路由 IP</span>
+                <span class="font-mono font-bold text-slate-700 dark:text-slate-200">{{ clashConfig.host || '127.0.0.1' }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <span>出国订阅</span>
+                <span class="text-indigo-600 font-semibold truncate">GLaDOS 节点</span>
+            </div>
+            <div class="pt-1.5 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
+                <span>刷新</span>
+                <span>{{ lastUpdatedTime }}</span>
+            </div>
+        </div>
+        <div v-show="sidebarCollapsed" class="p-3 border-t border-slate-100 dark:border-slate-800 flex justify-center text-slate-400">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="运行中"></span>
+        </div>
+    </aside>
+
+    <!-- ================= 右侧主视窗区域 ================= -->
+    <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+        <!-- 顶部轻量级 Header -->
+        <header class="h-16 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between shrink-0 z-20">
+            <div class="flex items-center space-x-3">
+                <h2 class="text-lg font-black text-slate-900 dark:text-white dark:text-white tracking-tight">{{ currentTabTitle }}</h2>
+                <span class="text-xs text-slate-300 dark:text-slate-700 font-normal hidden sm:inline">|</span>
+                <span class="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline">{{ currentTabSubtitle }}</span>
+            </div>
+
+            <!-- 右侧控制项：时间范围选择器 + 深色模式切换 + 刷新 + 退出 -->
+            <div class="flex items-center space-x-3">
+                <div v-if="currentTab !== 'settings'" class="inline-flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-semibold shadow-inner">
+                    <button v-for="p in periods" :key="p.key" @click="changePeriod(p.key)"
+                            :class="period === p.key ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-white dark:hover:text-white'"
+                            class="px-3 py-1.5 rounded-lg transition-all">
+                        {{ p.label }}
+                    </button>
+                </div>
+
+                <!-- 一键深色/浅色模式切换按钮 -->
+                <button @click="toggleDarkMode" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition shadow-xs cursor-pointer" :title="isDark ? '切换为亮色模式' : '切换为深色夜间模式'">
+                    <svg v-if="isDark" class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                    <svg v-else class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                </button>
+
+                <button v-if="currentTab !== 'settings'" @click="fetchData" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition shadow-xs cursor-pointer" title="立即同步数据">
+                    <svg class="w-4 h-4" :class="{'animate-spin': loading}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                </button>
+
+                <button v-if="authSettings.enabled && hasToken" @click="doLogout" class="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 transition flex items-center space-x-1" title="退出安全登录">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    <span>退出</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- 主内容滚动区 -->
+        <main class="flex-1 overflow-y-auto p-6 space-y-6">
+
+            <!-- ================= TAB 1: 概览 (默认首页) ================= -->
+            <div v-show="currentTab === 'overview'" class="space-y-6">
+                <!-- 4 核心统计指标卡片 -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">消耗总流量 (GLaDOS)</span>
+                            <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-black text-slate-900 dark:text-white tracking-tight font-mono">{{ formatBytes(summary.total_traffic) }}</div>
+                            <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 font-mono">
+                                <span>↓ 下行: {{ formatBytes(summary.total_down) }}</span>
+                                <span>↑ 上行: {{ formatBytes(summary.total_up) }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">活跃代理设备</span>
+                            <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{{ summary.device_count }} <span class="text-sm font-normal text-slate-500">台终端</span></div>
+                            <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
+                                <span class="text-emerald-600 font-medium">源 IP 穿透生效</span>
+                                <span class="text-slate-400">已识别</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">承载 GLaDOS 节点</span>
+                            <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{{ summary.node_count }} <span class="text-sm font-normal text-slate-500">个生效</span></div>
+                            <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
+                                <span class="text-indigo-600 font-medium">自动排除直连</span>
+                                <span class="text-slate-400">动态平衡</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">即时下行 / 上行</span>
+                            <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-xl font-black text-blue-600 tracking-tight font-mono flex items-baseline space-x-2">
+                                <span>↓ {{ formatSpeed(realtimeSpeed.down) }}</span>
+                                <span class="text-xs font-normal text-slate-400">/</span>
+                                <span class="text-base font-bold text-indigo-500">↑ {{ formatSpeed(realtimeSpeed.up) }}</span>
+                            </div>
+                            <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
+                                <span class="font-medium text-slate-600">并发连接: {{ liveCount }} 路</span>
+                                <span class="text-slate-400">秒级同步</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 实时网络速率折线图 -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs w-full">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></div>
+                                <h3 class="text-base font-bold text-slate-900 dark:text-white">⚡ 实时网络速率波动 (最近 60 秒)</h3>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-1">瞬时上传与下载吞吐速率实时曲线</p>
+                        </div>
+                        <div class="flex items-center space-x-3 text-xs font-mono">
+                            <span class="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 font-bold border border-blue-100">
+                                下行: {{ formatSpeed(realtimeSpeed.down) }}
+                            </span>
+                            <span class="px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 font-bold border border-indigo-100">
+                                上行: {{ formatSpeed(realtimeSpeed.up) }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="w-full h-64 min-w-full">
+                        <div id="realtimeSpeedChart" style="width: 100%; height: 100%;"></div>
+                    </div>
+                </div>
+
+                <!-- 两个对比分析图表 -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+                    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs w-full">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-base font-bold text-slate-900 dark:text-white">📱 设备流量占比排行</h3>
+                            <span class="text-xs text-slate-400">按总消耗</span>
+                        </div>
+                        <div class="w-full h-72 min-w-full">
+                            <div id="devicePieChart" style="width: 100%; height: 100%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs w-full">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-base font-bold text-slate-900 dark:text-white">⚡ GLaDOS 节点使用分布</h3>
+                            <span class="text-xs text-slate-400">TOP 8 节点</span>
+                        </div>
+                        <div class="w-full h-72 min-w-full">
+                            <div id="nodeBarChart" style="width: 100%; height: 100%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= TAB 2: 流量 (总消耗情况汇总 + 分页 + 排序) ================= -->
+            <div v-show="currentTab === 'consumption'" class="space-y-6">
+                <!-- 统计周期总览横幅 -->
+                <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-800 rounded-3xl p-6 text-white shadow-md shadow-blue-500/10">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div>
+                            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-xs font-semibold mb-3">
+                                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                                <span>统计周期：{{ currentPeriodLabel }}</span>
+                            </div>
+                            <h3 class="text-2xl sm:text-3xl font-black tracking-tight">GLaDOS 出国流量汇总报告</h3>
+                            <p class="text-xs text-blue-100/90 mt-1 max-w-xl">
+                                点击表格表头可快速按【下行流量】或【上行流量】自定义排序。
+                            </p>
+                        </div>
+                        <div class="flex items-center space-x-4 shrink-0 bg-white/10 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/10">
+                            <div>
+                                <div class="text-xs text-blue-200">周期内总消耗</div>
+                                <div class="text-3xl font-black font-mono tracking-tight">{{ formatBytes(summary.total_traffic) }}</div>
+                            </div>
+                            <div class="h-10 w-px bg-white/20"></div>
+                            <div class="space-y-1 text-xs text-blue-100 font-mono">
+                                <div>↓ 下行: <span class="font-bold text-white">{{ formatBytes(summary.total_down) }}</span></div>
+                                <div>↑ 上行: <span class="font-bold text-white">{{ formatBytes(summary.total_up) }}</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 1. 分设备消耗量 (带表头排序与分页) -->
+                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+                        <span class="text-base font-bold text-slate-900 dark:text-white">📱 1. 分设备消耗量</span>
+                        <div class="flex items-center space-x-2 text-xs">
+                            <span class="text-slate-400">快速排序:</span>
+                            <button @click="setSort('devices', 'download')" :class="sortState.devices.key === 'download' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2.5 py-1 rounded-lg transition shadow-2xs">下行 {{ sortState.devices.key === 'download' ? (sortState.devices.order === 'desc' ? '↓' : '↑') : '' }}</button>
+                            <button @click="setSort('devices', 'upload')" :class="sortState.devices.key === 'upload' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2.5 py-1 rounded-lg transition shadow-2xs">上行 {{ sortState.devices.key === 'upload' ? (sortState.devices.order === 'desc' ? '↓' : '↑') : '' }}</button>
+                            <button @click="setSort('devices', 'total')" :class="sortState.devices.key === 'total' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2.5 py-1 rounded-lg transition shadow-2xs">总消耗 {{ sortState.devices.key === 'total' ? (sortState.devices.order === 'desc' ? '↓' : '↑') : '' }}</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-100 select-none">
+                                <tr>
+                                    <th class="py-3 px-5">终端设备</th>
+                                    <th @click="toggleSort('devices', 'download')" class="py-3 px-5 cursor-pointer hover:bg-slate-100 transition group">
+                                        <div class="flex items-center space-x-1">
+                                            <span>下行流量</span>
+                                            <span :class="sortState.devices.key === 'download' ? 'text-blue-600 font-bold' : 'text-slate-300 group-hover:text-slate-400'">
+                                                {{ sortState.devices.key === 'download' ? (sortState.devices.order === 'desc' ? '↓' : '↑') : '↕' }}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th @click="toggleSort('devices', 'upload')" class="py-3 px-5 cursor-pointer hover:bg-slate-100 transition group">
+                                        <div class="flex items-center space-x-1">
+                                            <span>上行流量</span>
+                                            <span :class="sortState.devices.key === 'upload' ? 'text-blue-600 font-bold' : 'text-slate-300 group-hover:text-slate-400'">
+                                                {{ sortState.devices.key === 'upload' ? (sortState.devices.order === 'desc' ? '↓' : '↑') : '↕' }}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th @click="toggleSort('devices', 'total')" class="py-3 px-5 cursor-pointer hover:bg-slate-100 transition group">
+                                        <div class="flex items-center space-x-1">
+                                            <span>总消耗量</span>
+                                            <span :class="sortState.devices.key === 'total' ? 'text-blue-600 font-bold' : 'text-slate-300 group-hover:text-slate-400'">
+                                                {{ sortState.devices.key === 'total' ? (sortState.devices.order === 'desc' ? '↓' : '↑') : '↕' }}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th class="py-3 px-5">全网占比</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr v-for="d in pagedDevices" :key="d.ip" class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+                                    <td class="py-3.5 px-5">
+                                        <div class="font-bold text-slate-900 dark:text-white">{{ d.name }}</div>
+                                        <div class="text-xs font-mono text-slate-400 mt-0.5">{{ d.ip }}</div>
+                                    </td>
+                                    <td class="py-3.5 px-5 text-slate-600 font-mono" :class="{'font-bold text-blue-600': sortState.devices.key === 'download'}">{{ formatBytes(d.download) }}</td>
+                                    <td class="py-3.5 px-5 text-slate-600 font-mono" :class="{'font-bold text-indigo-600': sortState.devices.key === 'upload'}">{{ formatBytes(d.upload) }}</td>
+                                    <td class="py-3.5 px-5 font-black text-slate-900 dark:text-white font-mono" :class="{'text-blue-700': sortState.devices.key === 'total'}">{{ formatBytes(d.total) }}</td>
+                                    <td class="py-3.5 px-5">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-32 bg-slate-100 rounded-full h-2 overflow-hidden">
+                                                <div class="bg-blue-600 h-2 rounded-full" :style="{width: d.percent + '%'}"></div>
+                                            </div>
+                                            <span class="text-xs font-bold text-slate-700 w-10">{{ d.percent }}%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- 分页 -->
+                    <div class="px-5 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 bg-slate-50/50 dark:bg-slate-800/50">
+                        <span>第 {{ pageDevices }} / {{ totalPageDevices }} 页 (共 {{ devices.length }} 条)</span>
+                        <div class="flex items-center space-x-2">
+                            <button :disabled="pageDevices <= 1" @click="pageDevices--" class="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-40 font-medium">上一页</button>
+                            <button :disabled="pageDevices >= totalPageDevices" @click="pageDevices++" class="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-40 font-medium">下一页</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. 节点消耗量 (带表头排序与分页) -->
+                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+                        <span class="text-base font-bold text-slate-900 dark:text-white">⚡ 2. 节点消耗量</span>
+                        <div class="flex items-center space-x-2 text-xs">
+                            <span class="text-slate-400">快速排序:</span>
+                            <button @click="setSort('nodes', 'download')" :class="sortState.nodes.key === 'download' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2.5 py-1 rounded-lg transition shadow-2xs">下行 {{ sortState.nodes.key === 'download' ? (sortState.nodes.order === 'desc' ? '↓' : '↑') : '' }}</button>
+                            <button @click="setSort('nodes', 'upload')" :class="sortState.nodes.key === 'upload' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2.5 py-1 rounded-lg transition shadow-2xs">上行 {{ sortState.nodes.key === 'upload' ? (sortState.nodes.order === 'desc' ? '↓' : '↑') : '' }}</button>
+                            <button @click="setSort('nodes', 'total')" :class="sortState.nodes.key === 'total' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2.5 py-1 rounded-lg transition shadow-2xs">总消耗 {{ sortState.nodes.key === 'total' ? (sortState.nodes.order === 'desc' ? '↓' : '↑') : '' }}</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-100 select-none">
+                                <tr>
+                                    <th class="py-3 px-5">落地节点名称</th>
+                                    <th class="py-3 px-5">所属策略组</th>
+                                    <th @click="toggleSort('nodes', 'download')" class="py-3 px-5 cursor-pointer hover:bg-slate-100 transition group">
+                                        <div class="flex items-center space-x-1">
+                                            <span>下行流量</span>
+                                            <span :class="sortState.nodes.key === 'download' ? 'text-blue-600 font-bold' : 'text-slate-300 group-hover:text-slate-400'">
+                                                {{ sortState.nodes.key === 'download' ? (sortState.nodes.order === 'desc' ? '↓' : '↑') : '↕' }}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th @click="toggleSort('nodes', 'upload')" class="py-3 px-5 cursor-pointer hover:bg-slate-100 transition group">
+                                        <div class="flex items-center space-x-1">
+                                            <span>上行流量</span>
+                                            <span :class="sortState.nodes.key === 'upload' ? 'text-blue-600 font-bold' : 'text-slate-300 group-hover:text-slate-400'">
+                                                {{ sortState.nodes.key === 'upload' ? (sortState.nodes.order === 'desc' ? '↓' : '↑') : '↕' }}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th @click="toggleSort('nodes', 'total')" class="py-3 px-5 cursor-pointer hover:bg-slate-100 transition group">
+                                        <div class="flex items-center space-x-1">
+                                            <span>节点总消耗</span>
+                                            <span :class="sortState.nodes.key === 'total' ? 'text-blue-600 font-bold' : 'text-slate-300 group-hover:text-slate-400'">
+                                                {{ sortState.nodes.key === 'total' ? (sortState.nodes.order === 'desc' ? '↓' : '↑') : '↕' }}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th class="py-3 px-5">占比</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr v-for="n in pagedNodes" :key="n.node" class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+                                    <td class="py-3.5 px-5 font-bold text-slate-900 dark:text-white">
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg bg-sky-50 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 text-xs font-semibold border border-sky-100 dark:border-sky-800">
+    <span>{{ formatNodeName(n.node, n.flag) }}</span>
+</span>
+                                    </td>
+                                    <td class="py-3.5 px-5 text-slate-500 text-xs font-medium">{{ n.group }}</td>
+                                    <td class="py-3.5 px-5 text-slate-600 font-mono" :class="{'font-bold text-blue-600': sortState.nodes.key === 'download'}">{{ formatBytes(n.download) }}</td>
+                                    <td class="py-3.5 px-5 text-slate-600 font-mono" :class="{'font-bold text-indigo-600': sortState.nodes.key === 'upload'}">{{ formatBytes(n.upload) }}</td>
+                                    <td class="py-3.5 px-5 font-black text-slate-900 dark:text-white font-mono" :class="{'text-blue-700': sortState.nodes.key === 'total'}">{{ formatBytes(n.total) }}</td>
+                                    <td class="py-3.5 px-5">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-32 bg-slate-100 rounded-full h-2 overflow-hidden">
+                                                <div class="bg-sky-500 h-2 rounded-full" :style="{width: n.percent + '%'}"></div>
+                                            </div>
+                                            <span class="text-xs font-bold text-slate-700 w-10">{{ n.percent }}%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="px-5 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 bg-slate-50/50 dark:bg-slate-800/50">
+                        <span>第 {{ pageNodes }} / {{ totalPageNodes }} 页 (共 {{ nodes.length }} 条)</span>
+                        <div class="flex items-center space-x-2">
+                            <button :disabled="pageNodes <= 1" @click="pageNodes--" class="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-40 font-medium">上一页</button>
+                            <button :disabled="pageNodes >= totalPageNodes" @click="pageNodes++" class="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-40 font-medium">下一页</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. 域名消耗量 (带表头排序与分页) -->
+                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-800/50">
+                        <span class="text-base font-bold text-slate-900 dark:text-white">🌐 3. 域名消耗量</span>
+                        <div class="flex items-center space-x-3">
+                            <div class="flex items-center space-x-1.5 text-xs">
+                                <span class="text-slate-400">排序:</span>
+                                <button @click="setSort('domains', 'download')" :class="sortState.domains.key === 'download' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2 py-1 rounded-lg shadow-2xs">下行 {{ sortState.domains.key === 'download' ? (sortState.domains.order === 'desc' ? '↓' : '↑') : '' }}</button>
+                                <button @click="setSort('domains', 'upload')" :class="sortState.domains.key === 'upload' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2 py-1 rounded-lg shadow-2xs">上行 {{ sortState.domains.key === 'upload' ? (sortState.domains.order === 'desc' ? '↓' : '↑') : '' }}</button>
+                                <button @click="setSort('domains', 'total')" :class="sortState.domains.key === 'total' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2 py-1 rounded-lg shadow-2xs">总消耗 {{ sortState.domains.key === 'total' ? (sortState.domains.order === 'desc' ? '↓' : '↑') : '' }}</button>
+                            </div>
+                            <input v-model="domainSearch" placeholder="搜索域名..." class="text-xs px-3.5 py-1.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 w-48 bg-white shadow-2xs">
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-100 select-none">
+                                <tr>
+                                    <th class="py-3 px-5">排名</th>
+                                    <th class="py-3 px-5">目标域名</th>
+                                    <th @click="toggleSort('domains', 'download')" class="py-3 px-5 cursor-pointer hover:bg-slate-100 transition group">
+                                        <div class="flex items-center space-x-1">
+                                            <span>下行流量</span>
+                                            <span :class="sortState.domains.key === 'download' ? 'text-blue-600 font-bold' : 'text-slate-300 group-hover:text-slate-400'">
+                                                {{ sortState.domains.key === 'download' ? (sortState.domains.order === 'desc' ? '↓' : '↑') : '↕' }}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th @click="toggleSort('domains', 'upload')" class="py-3 px-5 cursor-pointer hover:bg-slate-100 transition group">
+                                        <div class="flex items-center space-x-1">
+                                            <span>上行流量</span>
+                                            <span :class="sortState.domains.key === 'upload' ? 'text-blue-600 font-bold' : 'text-slate-300 group-hover:text-slate-400'">
+                                                {{ sortState.domains.key === 'upload' ? (sortState.domains.order === 'desc' ? '↓' : '↑') : '↕' }}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th @click="toggleSort('domains', 'total')" class="py-3 px-5 cursor-pointer hover:bg-slate-100 transition group">
+                                        <div class="flex items-center space-x-1">
+                                            <span>消耗总流量</span>
+                                            <span :class="sortState.domains.key === 'total' ? 'text-blue-600 font-bold' : 'text-slate-300 group-hover:text-slate-400'">
+                                                {{ sortState.domains.key === 'total' ? (sortState.domains.order === 'desc' ? '↓' : '↑') : '↕' }}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th class="py-3 px-5">占总流量比</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-mono text-xs">
+                                <tr v-for="(dm, idx) in pagedDomains" :key="dm.host" class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+                                    <td class="py-3 px-5 font-bold text-slate-400">#{{ (pageDomains - 1) * pageSize + idx + 1 }}</td>
+                                    <td class="py-3 px-5 font-sans font-bold text-slate-900 dark:text-white max-w-sm truncate" :title="dm.host">
+                                        <span class="inline-block px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-mono text-xs">{{ dm.host }}</span>
+                                    </td>
+                                    <td class="py-3 px-5 text-slate-600" :class="{'font-bold text-blue-600': sortState.domains.key === 'download'}">{{ formatBytes(dm.download) }}</td>
+                                    <td class="py-3 px-5 text-slate-600" :class="{'font-bold text-indigo-600': sortState.domains.key === 'upload'}">{{ formatBytes(dm.upload) }}</td>
+                                    <td class="py-3 px-5 font-black text-slate-900 dark:text-white text-sm" :class="{'text-blue-700': sortState.domains.key === 'total'}">{{ formatBytes(dm.total) }}</td>
+                                    <td class="py-3 px-5 font-sans">
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-24 bg-slate-100 rounded-full h-2 overflow-hidden">
+                                                <div class="bg-indigo-600 h-2 rounded-full" :style="{width: dm.percent + '%'}"></div>
+                                            </div>
+                                            <span class="text-xs font-semibold text-slate-600">{{ dm.percent }}%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="px-5 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 bg-slate-50/50 dark:bg-slate-800/50">
+                        <span>第 {{ pageDomains }} / {{ totalPageDomains }} 页 (共 {{ filteredDomains.length }} 条)</span>
+                        <div class="flex items-center space-x-2">
+                            <button :disabled="pageDomains <= 1" @click="pageDomains--" class="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-40 font-medium">上一页</button>
+                            <button :disabled="pageDomains >= totalPageDomains" @click="pageDomains++" class="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-40 font-medium">下一页</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= TAB 3: 设备 (带双柱图 + 表格排序 + 分页) ================= -->
+            <div v-show="currentTab === 'devices'" class="space-y-6">
+                <!-- 设备上下行双柱对比分析图 -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs w-full">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900 dark:text-white">📊 各设备上下行流量消耗对比</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">直观分析各终端下载（蓝）与上传（紫）流量结构</p>
+                        </div>
+                        <span class="text-xs font-mono text-slate-400">总设备: {{ devices.length }} 台</span>
+                    </div>
+                    <div class="w-full h-64 min-w-full">
+                        <div id="devicePageChart" style="width: 100%; height: 100%;"></div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-800/50">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900 dark:text-white">局域网设备列表</h3>
+                            <p class="text-xs text-slate-400 mt-0.5">点击表头可按下行、上行或总流量排序</p>
+                        </div>
+                        <div class="flex items-center space-x-2 text-xs">
+                            <span class="text-slate-400">排序:</span>
+                            <button @click="setSort('devices', 'download')" :class="sortState.devices.key === 'download' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2.5 py-1 rounded-lg transition shadow-2xs">下行 {{ sortState.devices.key === 'download' ? (sortState.devices.order === 'desc' ? '↓' : '↑') : '' }}</button>
+                            <button @click="setSort('devices', 'upload')" :class="sortState.devices.key === 'upload' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2.5 py-1 rounded-lg transition shadow-2xs">上行 {{ sortState.devices.key === 'upload' ? (sortState.devices.order === 'desc' ? '↓' : '↑') : '' }}</button>
+                            <button @click="setSort('devices', 'total')" :class="sortState.devices.key === 'total' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2.5 py-1 rounded-lg transition shadow-2xs">总消耗 {{ sortState.devices.key === 'total' ? (sortState.devices.order === 'desc' ? '↓' : '↑') : '' }}</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-100 select-none">
+                                <tr>
+                                    <th class="py-3 px-5">设备名称 / IP</th>
+                                    <th @click="toggleSort('devices', 'download')" class="py-3 px-5 cursor-pointer hover:bg-slate-100 transition group">
+                                        <div class="flex items-center space-x-1">
+                                            <span>下行流量</span>
+                                            <span :class="sortState.devices.key === 'download' ? 'text-blue-600 font-bold' : 'text-slate-300 group-hover:text-slate-400'">
+                                                {{ sortState.devices.key === 'download' ? (sortState.devices.order === 'desc' ? '↓' : '↑') : '↕' }}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th @click="toggleSort('devices', 'upload')" class="py-3 px-5 cursor-pointer hover:bg-slate-100 transition group">
+                                        <div class="flex items-center space-x-1">
+                                            <span>上行流量</span>
+                                            <span :class="sortState.devices.key === 'upload' ? 'text-blue-600 font-bold' : 'text-slate-300 group-hover:text-slate-400'">
+                                                {{ sortState.devices.key === 'upload' ? (sortState.devices.order === 'desc' ? '↓' : '↑') : '↕' }}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th @click="toggleSort('devices', 'total')" class="py-3 px-5 cursor-pointer hover:bg-slate-100 transition group">
+                                        <div class="flex items-center space-x-1">
+                                            <span>总消耗流量</span>
+                                            <span :class="sortState.devices.key === 'total' ? 'text-blue-600 font-bold' : 'text-slate-300 group-hover:text-slate-400'">
+                                                {{ sortState.devices.key === 'total' ? (sortState.devices.order === 'desc' ? '↓' : '↑') : '↕' }}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th class="py-3 px-5">占比</th>
+                                    <th class="py-3 px-5 text-right">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr v-for="d in pagedDevices" :key="d.ip" class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+                                    <td class="py-4 px-5">
+                                        <div class="font-bold text-slate-900 dark:text-white">{{ d.name }}</div>
+                                        <div class="text-xs font-mono text-slate-400 mt-0.5">{{ d.ip }}</div>
+                                    </td>
+                                    <td class="py-4 px-5 text-slate-600 font-mono" :class="{'font-bold text-blue-600': sortState.devices.key === 'download'}">{{ formatBytes(d.download) }}</td>
+                                    <td class="py-4 px-5 text-slate-600 font-mono" :class="{'font-bold text-indigo-600': sortState.devices.key === 'upload'}">{{ formatBytes(d.upload) }}</td>
+                                    <td class="py-4 px-5 font-black text-slate-900 dark:text-white font-mono text-base" :class="{'text-blue-700': sortState.devices.key === 'total'}">{{ formatBytes(d.total) }}</td>
+                                    <td class="py-4 px-5">
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-28 bg-slate-100 rounded-full h-2 overflow-hidden">
+                                                <div class="bg-indigo-600 h-2 rounded-full" :style="{width: d.percent + '%'}"></div>
+                                            </div>
+                                            <span class="text-xs font-bold text-slate-700">{{ d.percent }}%</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-5 text-right">
+                                        <button @click="openEditAlias(d)" class="text-xs bg-slate-100 hover:bg-blue-50 hover:text-blue-600 px-3 py-1.5 rounded-lg text-slate-600 font-semibold transition">
+                                            编辑别名
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="px-5 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 bg-slate-50/50 dark:bg-slate-800/50">
+                        <span>第 {{ pageDevices }} / {{ totalPageDevices }} 页 (共 {{ devices.length }} 台设备)</span>
+                        <div class="flex items-center space-x-2">
+                            <button :disabled="pageDevices <= 1" @click="pageDevices--" class="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-40 font-medium">上一页</button>
+                            <button :disabled="pageDevices >= totalPageDevices" @click="pageDevices++" class="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-40 font-medium">下一页</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= TAB 4: 节点 (带排行图 + 表格排序 + 分页) ================= -->
+            <div v-show="currentTab === 'nodes'" class="space-y-6">
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs w-full">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900 dark:text-white">⚡ GLaDOS 落地节点承载量排行</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">展示跑量最高的前 8 个出国节点</p>
+                        </div>
+                        <span class="text-xs font-mono text-slate-400">活跃节点: {{ nodes.length }} 个</span>
+                    </div>
+                    <div class="w-full h-64 min-w-full">
+                        <div id="nodePageChart" style="width: 100%; height: 100%;"></div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-800/50">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white">GLaDOS 订阅节点流量列表</h3>
+                        <div class="flex items-center space-x-2 text-xs">
+                            <span class="text-slate-400">排序:</span>
+                            <button @click="setSort('nodes', 'download')" :class="sortState.nodes.key === 'download' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2.5 py-1 rounded-lg transition shadow-2xs">下行 {{ sortState.nodes.key === 'download' ? (sortState.nodes.order === 'desc' ? '↓' : '↑') : '' }}</button>
+                            <button @click="setSort('nodes', 'upload')" :class="sortState.nodes.key === 'upload' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2.5 py-1 rounded-lg transition shadow-2xs">上行 {{ sortState.nodes.key === 'upload' ? (sortState.nodes.order === 'desc' ? '↓' : '↑') : '' }}</button>
+                            <button @click="setSort('nodes', 'total')" :class="sortState.nodes.key === 'total' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2.5 py-1 rounded-lg transition shadow-2xs">总消耗 {{ sortState.nodes.key === 'total' ? (sortState.nodes.order === 'desc' ? '↓' : '↑') : '' }}</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-100 select-none">
+                                <tr>
+                                    <th class="py-3 px-5">落地节点名称</th>
+                                    <th class="py-3 px-5">所属策略组</th>
+                                    <th @click="toggleSort('nodes', 'download')" class="py-3 px-5 cursor-pointer hover:bg-slate-100 transition group">
+                                        <div class="flex items-center space-x-1">
+                                            <span>下行流量</span>
+                                            <span :class="sortState.nodes.key === 'download' ? 'text-blue-600 font-bold' : 'text-slate-300 group-hover:text-slate-400'">
+                                                {{ sortState.nodes.key === 'download' ? (sortState.nodes.order === 'desc' ? '↓' : '↑') : '↕' }}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th @click="toggleSort('nodes', 'upload')" class="py-3 px-5 cursor-pointer hover:bg-slate-100 transition group">
+                                        <div class="flex items-center space-x-1">
+                                            <span>上行流量</span>
+                                            <span :class="sortState.nodes.key === 'upload' ? 'text-blue-600 font-bold' : 'text-slate-300 group-hover:text-slate-400'">
+                                                {{ sortState.nodes.key === 'upload' ? (sortState.nodes.order === 'desc' ? '↓' : '↑') : '↕' }}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th @click="toggleSort('nodes', 'total')" class="py-3 px-5 cursor-pointer hover:bg-slate-100 transition group">
+                                        <div class="flex items-center space-x-1">
+                                            <span>消耗总流量</span>
+                                            <span :class="sortState.nodes.key === 'total' ? 'text-blue-600 font-bold' : 'text-slate-300 group-hover:text-slate-400'">
+                                                {{ sortState.nodes.key === 'total' ? (sortState.nodes.order === 'desc' ? '↓' : '↑') : '↕' }}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th class="py-3 px-5">总占比</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr v-for="n in pagedNodes" :key="n.node" class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+                                    <td class="py-3.5 px-5 font-bold text-slate-900 dark:text-white">
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg bg-sky-50 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 text-xs font-semibold border border-sky-100 dark:border-sky-800">
+    <span>{{ formatNodeName(n.node, n.flag) }}</span>
+</span>
+                                    </td>
+                                    <td class="py-3.5 px-5 text-slate-500 text-xs font-medium">{{ n.group }}</td>
+                                    <td class="py-3.5 px-5 text-slate-600 font-mono" :class="{'font-bold text-blue-600': sortState.nodes.key === 'download'}">{{ formatBytes(n.download) }}</td>
+                                    <td class="py-3.5 px-5 text-slate-600 font-mono" :class="{'font-bold text-indigo-600': sortState.nodes.key === 'upload'}">{{ formatBytes(n.upload) }}</td>
+                                    <td class="py-3.5 px-5 font-black text-slate-900 dark:text-white font-mono text-base" :class="{'text-blue-700': sortState.nodes.key === 'total'}">{{ formatBytes(n.total) }}</td>
+                                    <td class="py-3.5 px-5">
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-24 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                                <div class="bg-sky-500 h-1.5 rounded-full" :style="{width: n.percent + '%'}"></div>
+                                            </div>
+                                            <span class="text-xs font-semibold text-slate-600">{{ n.percent }}%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="px-5 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 bg-slate-50/50 dark:bg-slate-800/50">
+                        <span>第 {{ pageNodes }} / {{ totalPageNodes }} 页 (共 {{ nodes.length }} 个节点)</span>
+                        <div class="flex items-center space-x-2">
+                            <button :disabled="pageNodes <= 1" @click="pageNodes--" class="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-40 font-medium">上一页</button>
+                            <button :disabled="pageNodes >= totalPageNodes" @click="pageNodes++" class="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-40 font-medium">下一页</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= TAB 5: 域名 (带排行图 + 表格排序 + 分页) ================= -->
+            <div v-show="currentTab === 'domains'" class="space-y-6">
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs w-full">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900 dark:text-white">🌐 热门访问域名流量排行 TOP 10</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">直观呈现产生流量最大的外网目标域名与服务</p>
+                        </div>
+                        <span class="text-xs font-mono text-slate-400">总域名: {{ domains.length }} 个</span>
+                    </div>
+                    <div class="w-full h-64 min-w-full">
+                        <div id="domainPageChart" style="width: 100%; height: 100%;"></div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-800/50">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white">域名流量详细列表</h3>
+                        <div class="flex items-center space-x-3">
+                            <div class="flex items-center space-x-1.5 text-xs">
+                                <span class="text-slate-400">排序:</span>
+                                <button @click="setSort('domains', 'download')" :class="sortState.domains.key === 'download' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2 py-1 rounded-lg shadow-2xs">下行 {{ sortState.domains.key === 'download' ? (sortState.domains.order === 'desc' ? '↓' : '↑') : '' }}</button>
+                                <button @click="setSort('domains', 'upload')" :class="sortState.domains.key === 'upload' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2 py-1 rounded-lg shadow-2xs">上行 {{ sortState.domains.key === 'upload' ? (sortState.domains.order === 'desc' ? '↓' : '↑') : '' }}</button>
+                                <button @click="setSort('domains', 'total')" :class="sortState.domains.key === 'total' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2 py-1 rounded-lg shadow-2xs">总消耗 {{ sortState.domains.key === 'total' ? (sortState.domains.order === 'desc' ? '↓' : '↑') : '' }}</button>
+                            </div>
+                            <input v-model="domainSearch" placeholder="搜索域名..." class="text-xs px-3.5 py-1.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 w-44 bg-white shadow-2xs">
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-100 select-none">
+                                <tr>
+                                    <th class="py-3 px-5">排名</th>
+                                    <th class="py-3 px-5">域名 / 目标地址</th>
+                                    <th @click="toggleSort('domains', 'download')" class="py-3 px-5 cursor-pointer hover:bg-slate-100 transition group">
+                                        <div class="flex items-center space-x-1">
+                                            <span>下行流量</span>
+                                            <span :class="sortState.domains.key === 'download' ? 'text-blue-600 font-bold' : 'text-slate-300 group-hover:text-slate-400'">
+                                                {{ sortState.domains.key === 'download' ? (sortState.domains.order === 'desc' ? '↓' : '↑') : '↕' }}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th @click="toggleSort('domains', 'upload')" class="py-3 px-5 cursor-pointer hover:bg-slate-100 transition group">
+                                        <div class="flex items-center space-x-1">
+                                            <span>上行流量</span>
+                                            <span :class="sortState.domains.key === 'upload' ? 'text-blue-600 font-bold' : 'text-slate-300 group-hover:text-slate-400'">
+                                                {{ sortState.domains.key === 'upload' ? (sortState.domains.order === 'desc' ? '↓' : '↑') : '↕' }}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th @click="toggleSort('domains', 'total')" class="py-3 px-5 cursor-pointer hover:bg-slate-100 transition group">
+                                        <div class="flex items-center space-x-1">
+                                            <span>消耗总流量</span>
+                                            <span :class="sortState.domains.key === 'total' ? 'text-blue-600 font-bold' : 'text-slate-300 group-hover:text-slate-400'">
+                                                {{ sortState.domains.key === 'total' ? (sortState.domains.order === 'desc' ? '↓' : '↑') : '↕' }}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th class="py-3 px-5">占总流量比</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-mono text-xs">
+                                <tr v-for="(dm, idx) in pagedDomains" :key="dm.host" class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+                                    <td class="py-3 px-5 font-bold text-slate-400">#{{ (pageDomains - 1) * pageSize + idx + 1 }}</td>
+                                    <td class="py-3 px-5 font-sans font-bold text-slate-900 dark:text-white max-w-sm truncate" :title="dm.host">
+                                        <span class="inline-block px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-mono text-xs">{{ dm.host }}</span>
+                                    </td>
+                                    <td class="py-3 px-5 text-slate-600" :class="{'font-bold text-blue-600': sortState.domains.key === 'download'}">{{ formatBytes(dm.download) }}</td>
+                                    <td class="py-3 px-5 text-slate-600" :class="{'font-bold text-indigo-600': sortState.domains.key === 'upload'}">{{ formatBytes(dm.upload) }}</td>
+                                    <td class="py-3 px-5 font-black text-slate-900 dark:text-white text-sm" :class="{'text-blue-700': sortState.domains.key === 'total'}">{{ formatBytes(dm.total) }}</td>
+                                    <td class="py-3 px-5 font-sans">
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-24 bg-slate-100 rounded-full h-2 overflow-hidden">
+                                                <div class="bg-indigo-600 h-2 rounded-full" :style="{width: dm.percent + '%'}"></div>
+                                            </div>
+                                            <span class="text-xs font-semibold text-slate-600">{{ dm.percent }}%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="px-5 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 bg-slate-50/50 dark:bg-slate-800/50">
+                        <span>第 {{ pageDomains }} / {{ totalPageDomains }} 页 (共 {{ filteredDomains.length }} 条)</span>
+                        <div class="flex items-center space-x-2">
+                            <button :disabled="pageDomains <= 1" @click="pageDomains--" class="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-40 font-medium">上一页</button>
+                            <button :disabled="pageDomains >= totalPageDomains" @click="pageDomains++" class="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-40 font-medium">下一页</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= TAB 6: 连接 (带并发图 + 表格排序 + 分页) ================= -->
+            <div v-show="currentTab === 'live'" class="space-y-6">
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs w-full">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900 dark:text-white">🟢 实时并发连接设备分布</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">当前实时有通信流量的会话分布情况</p>
+                        </div>
+                        <span class="text-xs font-mono text-emerald-600 font-bold">活跃连接: {{ liveCount }} 路</span>
+                    </div>
+                    <div class="w-full h-56 min-w-full">
+                        <div id="livePageChart" style="width: 100%; height: 100%;"></div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-800/50">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white">当前活跃连接明细表</h3>
+                        <div class="flex items-center space-x-3">
+                            <div class="flex items-center space-x-1.5 text-xs">
+                                <span class="text-slate-400">排序:</span>
+                                <button @click="setSort('live', 'download')" :class="sortState.live.key === 'download' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2 py-1 rounded-lg shadow-2xs">下行 {{ sortState.live.key === 'download' ? (sortState.live.order === 'desc' ? '↓' : '↑') : '' }}</button>
+                                <button @click="setSort('live', 'upload')" :class="sortState.live.key === 'upload' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2 py-1 rounded-lg shadow-2xs">上行 {{ sortState.live.key === 'upload' ? (sortState.live.order === 'desc' ? '↓' : '↑') : '' }}</button>
+                                <button @click="setSort('live', 'total')" :class="sortState.live.key === 'total' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2 py-1 rounded-lg shadow-2xs">总流量 {{ sortState.live.key === 'total' ? (sortState.live.order === 'desc' ? '↓' : '↑') : '' }}</button>
+                            </div>
+                            <input v-model="liveSearch" placeholder="搜索设备、域名或节点..." class="text-xs px-3.5 py-1.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 w-44 bg-white shadow-2xs">
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-100 select-none">
+                                <tr>
+                                    <th class="py-3 px-4">客户端终端</th>
+                                    <th class="py-3 px-4">访问目标域名 / IP</th>
+                                    <th class="py-3 px-4">触发规则</th>
+                                    <th class="py-3 px-4">出口节点</th>
+                                    <th @click="toggleSort('live', 'download')" class="py-3 px-4 cursor-pointer hover:bg-slate-100 transition group">
+                                        <div class="flex items-center space-x-1">
+                                            <span>实时下行</span>
+                                            <span :class="sortState.live.key === 'download' ? 'text-blue-600 font-bold' : 'text-slate-300 group-hover:text-slate-400'">
+                                                {{ sortState.live.key === 'download' ? (sortState.live.order === 'desc' ? '↓' : '↑') : '↕' }}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th @click="toggleSort('live', 'upload')" class="py-3 px-4 cursor-pointer hover:bg-slate-100 transition group">
+                                        <div class="flex items-center space-x-1">
+                                            <span>实时上行</span>
+                                            <span :class="sortState.live.key === 'upload' ? 'text-blue-600 font-bold' : 'text-slate-300 group-hover:text-slate-400'">
+                                                {{ sortState.live.key === 'upload' ? (sortState.live.order === 'desc' ? '↓' : '↑') : '↕' }}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th @click="toggleSort('live', 'total')" class="py-3 px-4 cursor-pointer hover:bg-slate-100 transition group">
+                                        <div class="flex items-center space-x-1">
+                                            <span>连接累计流量</span>
+                                            <span :class="sortState.live.key === 'total' ? 'text-blue-600 font-bold' : 'text-slate-300 group-hover:text-slate-400'">
+                                                {{ sortState.live.key === 'total' ? (sortState.live.order === 'desc' ? '↓' : '↑') : '↕' }}
+                                            </span>
+                                        </div>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-mono text-xs">
+                                <tr v-for="c in pagedLive" :key="c.id" class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+                                    <td class="py-3 px-4">
+                                        <div class="font-bold text-slate-800 font-sans">{{ c.device_name }}</div>
+                                        <div class="text-slate-400 text-[11px]">{{ c.source_ip }}</div>
+                                    </td>
+                                    <td class="py-3 px-4 max-w-xs truncate text-slate-700 dark:text-slate-200 font-sans" :title="c.host">
+                                        <div class="flex items-center space-x-1.5">
+                                            <span class="text-sm select-none">{{ c.host_flag || '🌐' }}</span>
+                                            <span class="truncate">{{ c.host || '未知目标' }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">{{ c.rule }}</span>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 font-medium border border-sky-100 dark:border-sky-800">
+    <span>{{ formatNodeName(c.node, c.node_flag) }}</span>
+</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-slate-600" :class="{'font-bold text-blue-600': sortState.live.key === 'download'}">
+                                        ↓ {{ formatBytes(c.download) }}
+                                    </td>
+                                    <td class="py-3 px-4 text-slate-600" :class="{'font-bold text-indigo-600': sortState.live.key === 'upload'}">
+                                        ↑ {{ formatBytes(c.upload) }}
+                                    </td>
+                                    <td class="py-3 px-4 font-black text-slate-900 dark:text-white text-sm" :class="{'text-blue-700': sortState.live.key === 'total'}">
+                                        {{ formatBytes(c.total) }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="px-5 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 bg-slate-50/50 dark:bg-slate-800/50">
+                        <span>第 {{ pageLive }} / {{ totalPageLive }} 页 (共 {{ filteredLiveList.length }} 路连接)</span>
+                        <div class="flex items-center space-x-2">
+                            <button :disabled="pageLive <= 1" @click="pageLive--" class="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-40 font-medium">上一页</button>
+                            <button :disabled="pageLive >= totalPageLive" @click="pageLive++" class="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-40 font-medium">下一页</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= TAB 7: 明细 (带规则图 + 表格排序 + 分页) ================= -->
+            <div v-show="currentTab === 'details'" class="space-y-6">
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs w-full">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900 dark:text-white">🎯 高频出国分流规则消耗分布</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">分析是哪些分流规则（如 Google、AI、GFW 等）触发了流量</p>
+                        </div>
+                        <span class="text-xs font-mono text-slate-400">总规则: {{ rules.length }} 条</span>
+                    </div>
+                    <div class="w-full h-60 min-w-full">
+                        <div id="rulePageChart" style="width: 100%; height: 100%;"></div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-800/50">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900 dark:text-white">历史流量组合明细 (设备 × 规则 × 节点)</h3>
+                            <p class="text-xs text-slate-400 mt-0.5">点击表头可按上下行或总流量排序</p>
+                        </div>
+                        <div class="flex items-center space-x-2 text-xs">
+                            <span class="text-slate-400">排序:</span>
+                            <button @click="setSort('details', 'download')" :class="sortState.details.key === 'download' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2.5 py-1 rounded-lg transition shadow-2xs">下行 {{ sortState.details.key === 'download' ? (sortState.details.order === 'desc' ? '↓' : '↑') : '' }}</button>
+                            <button @click="setSort('details', 'upload')" :class="sortState.details.key === 'upload' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2.5 py-1 rounded-lg transition shadow-2xs">上行 {{ sortState.details.key === 'upload' ? (sortState.details.order === 'desc' ? '↓' : '↑') : '' }}</button>
+                            <button @click="setSort('details', 'total')" :class="sortState.details.key === 'total' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2.5 py-1 rounded-lg transition shadow-2xs">总消耗 {{ sortState.details.key === 'total' ? (sortState.details.order === 'desc' ? '↓' : '↑') : '' }}</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-100 select-none">
+                                <tr>
+                                    <th class="py-3 px-4">记录日期</th>
+                                    <th class="py-3 px-4">设备</th>
+                                    <th class="py-3 px-4">命中规则</th>
+                                    <th class="py-3 px-4">出口节点</th>
+                                    <th @click="toggleSort('details', 'download')" class="py-3 px-4 cursor-pointer hover:bg-slate-100 transition group">
+                                        <div class="flex items-center space-x-1">
+                                            <span>下行流量</span>
+                                            <span :class="sortState.details.key === 'download' ? 'text-blue-600 font-bold' : 'text-slate-300 group-hover:text-slate-400'">
+                                                {{ sortState.details.key === 'download' ? (sortState.details.order === 'desc' ? '↓' : '↑') : '↕' }}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th @click="toggleSort('details', 'upload')" class="py-3 px-4 cursor-pointer hover:bg-slate-100 transition group">
+                                        <div class="flex items-center space-x-1">
+                                            <span>上行流量</span>
+                                            <span :class="sortState.details.key === 'upload' ? 'text-blue-600 font-bold' : 'text-slate-300 group-hover:text-slate-400'">
+                                                {{ sortState.details.key === 'upload' ? (sortState.details.order === 'desc' ? '↓' : '↑') : '↕' }}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th @click="toggleSort('details', 'total')" class="py-3 px-4 cursor-pointer hover:bg-slate-100 transition group">
+                                        <div class="flex items-center space-x-1">
+                                            <span>累计总流量</span>
+                                            <span :class="sortState.details.key === 'total' ? 'text-blue-600 font-bold' : 'text-slate-300 group-hover:text-slate-400'">
+                                                {{ sortState.details.key === 'total' ? (sortState.details.order === 'desc' ? '↓' : '↑') : '↕' }}
+                                            </span>
+                                        </div>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-xs font-mono">
+                                <tr v-for="d in pagedDetails" :key="d.date + d.device_ip + d.rule + d.node" class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+                                    <td class="py-3 px-4 text-slate-500">{{ d.date }}</td>
+                                    <td class="py-3 px-4 font-sans">
+                                        <span class="font-bold text-slate-900 dark:text-white">{{ d.device_name }}</span>
+                                        <span class="text-[11px] text-slate-400 block font-mono">{{ d.device_ip }}</span>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">{{ d.rule }}</span>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <span class="px-2 py-0.5 rounded bg-sky-50 text-sky-700 font-medium">{{ d.node }}</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-slate-600" :class="{'font-bold text-blue-600': sortState.details.key === 'download'}">
+                                        ↓ {{ formatBytes(d.download) }}
+                                    </td>
+                                    <td class="py-3 px-4 text-slate-600" :class="{'font-bold text-indigo-600': sortState.details.key === 'upload'}">
+                                        ↑ {{ formatBytes(d.upload) }}
+                                    </td>
+                                    <td class="py-3 px-4 font-black text-slate-900 dark:text-white text-sm" :class="{'text-blue-700': sortState.details.key === 'total'}">
+                                        {{ formatBytes(d.total) }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="px-5 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 bg-slate-50/50 dark:bg-slate-800/50">
+                        <span>第 {{ pageDetails }} / {{ totalPageDetails }} 页 (共 {{ details.length }} 条明细)</span>
+                        <div class="flex items-center space-x-2">
+                            <button :disabled="pageDetails <= 1" @click="pageDetails--" class="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-40 font-medium">上一页</button>
+                            <button :disabled="pageDetails >= totalPageDetails" @click="pageDetails++" class="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-40 font-medium">下一页</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- ================= Tab 8: 系统与参数设置 (存储、客户端、访问控制) ================= -->
+            <div v-show="currentTab === 'settings'" class="space-y-6 max-w-5xl mx-auto pb-10">
+                <!-- 顶部引导卡片 -->
+                <div class="bg-blue-50/80 border border-blue-200/80 rounded-2xl p-4 flex items-start space-x-3 text-xs text-blue-800">
+                    <svg class="w-5 h-5 text-blue-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div class="space-y-1">
+                        <p class="font-bold text-sm">OpenClash 流量监控系统管理</p>
+                        <p class="text-blue-700/90 leading-relaxed">
+                            支持灵活设定历史流量持久化策略、随时切换监控的目标旁路由或 OpenClash 客户端，并提供访问控制以防止未经授权的局域网访问。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 模块 1: 数据储存与清理策略 -->
+                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1.5 3 3.5 3h9c2 0 3.5-1 3.5-3V7c0-2-1.5-3-3.5-3h-9C5.5 4 4 5 4 7zm0 5h16M9 4v16"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-900 dark:text-white">数据存储与自动清理</h3>
+                                <p class="text-xs text-slate-500">查看本地 SQLite 数据库体积，配置自动保留天数与定期清理任务</p>
+                            </div>
+                        </div>
+                        <button @click="loadStorageInfo" class="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center space-x-1">
+                            <svg class="w-3.5 h-3.5" :class="{'animate-spin': loadingStorage}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            <span>刷新状态</span>
+                        </button>
+                    </div>
+
+                    <div class="p-6 space-y-6">
+                        <!-- 存储关键指标统计卡 -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
+                                <div class="text-xs text-slate-500 font-medium mb-1">数据库占用</div>
+                                <div class="text-xl font-black text-slate-900 dark:text-white">{{ formatBytes(storageInfo.db_size_bytes || 0) }}</div>
+                                <div class="text-[11px] text-slate-400 mt-1 font-mono">traffic.db (SQLite3)</div>
+                            </div>
+                            <div class="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
+                                <div class="text-xs text-slate-500 font-medium mb-1">设备流量记录数</div>
+                                <div class="text-xl font-black text-indigo-600">{{ (storageInfo.traffic_rows || 0).toLocaleString() }} <span class="text-xs font-normal text-slate-400">条</span></div>
+                                <div class="text-[11px] text-slate-400 mt-1">按天/设备/节点聚合</div>
+                            </div>
+                            <div class="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
+                                <div class="text-xs text-slate-500 font-medium mb-1">域名排行记录数</div>
+                                <div class="text-xl font-black text-blue-600">{{ (storageInfo.domain_rows || 0).toLocaleString() }} <span class="text-xs font-normal text-slate-400">条</span></div>
+                                <div class="text-[11px] text-slate-400 mt-1">按天/目标域名聚合</div>
+                            </div>
+                            <div class="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
+                                <div class="text-xs text-slate-500 font-medium mb-1">数据时间跨度</div>
+                                <div class="text-xs font-bold text-slate-800 mt-1 font-mono leading-tight">
+                                    {{ storageInfo.earliest_date || '-' }}<br/>至 {{ storageInfo.latest_date || '-' }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 数据保留策略配置 -->
+                        <div class="border-t border-slate-100 dark:border-slate-800 pt-5">
+                            <label class="block text-xs font-bold text-slate-800 mb-2">自动清理与历史数据保留周期</label>
+                            <div class="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+                                <select v-model.number="retentionDays" class="text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option :value="30">保留最近 30 天 (推荐小型路由/U盘)</option>
+                                    <option :value="60">保留最近 60 天</option>
+                                    <option :value="90">保留最近 90 天 (默认均衡设置)</option>
+                                    <option :value="180">保留最近 180 天 (半年度)</option>
+                                    <option :value="365">保留最近 1 年</option>
+                                    <option :value="0">永久保留不自动删除</option>
+                                </select>
+                                <button @click="saveRetentionPolicy" :disabled="savingRetention" class="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition disabled:opacity-50">
+                                    {{ savingRetention ? '正在保存...' : '保存保留周期' }}
+                                </button>
+                                <span v-if="retentionSavedTip" class="text-xs text-emerald-600 font-semibold flex items-center space-x-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    <span>保存成功，已设置后台定时清理</span>
+                                </span>
+                            </div>
+                            <p class="text-[11px] text-slate-400 mt-2">系统后台每 12 小时自动巡检一次，超过保留期限的记录将被彻底抹除并执行 SQLite VACUUM 释放磁盘空间。</p>
+                        </div>
+
+                        <!-- 手动立即清理按钮 -->
+                        <div class="border-t border-slate-100 dark:border-slate-800 pt-5 flex flex-wrap items-center gap-3">
+                            <span class="text-xs font-bold text-slate-700 mr-2">手动维护操作：</span>
+                            <button @click="triggerManualClean(30)" :disabled="cleaningData" class="px-3.5 py-1.5 rounded-xl text-xs font-medium border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 transition">
+                                立即清理 30 天前旧数据
+                            </button>
+                            <button @click="triggerManualClean(90)" :disabled="cleaningData" class="px-3.5 py-1.5 rounded-xl text-xs font-medium border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 transition">
+                                立即清理 90 天前旧数据
+                            </button>
+                            <button @click="triggerManualClean('all')" :disabled="cleaningData" class="px-3.5 py-1.5 rounded-xl text-xs font-bold border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 transition">
+                                清空全部历史数据
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 模块 2: 目标 OpenClash / 旁路由连接设置 -->
+                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-900 dark:text-white">OpenClash / 旁路由目标连接</h3>
+                                <p class="text-xs text-slate-500">切换监控的目标旁路由 IP、REST API 控制端口或访问密钥</p>
+                            </div>
+                        </div>
+                        <span class="text-[11px] px-2.5 py-1 rounded-full font-bold bg-emerald-100 text-emerald-700">
+                            支持热切换重连
+                        </span>
+                    </div>
+
+                    <div class="p-6 space-y-5">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">旁路由 / OpenClash IP 地址</label>
+                                <input v-model="clashConfig.host" placeholder="127.0.0.1 或 旁路由IP" class="w-full text-xs font-mono bg-slate-50 text-slate-800 px-3 py-2 rounded-xl border border-slate-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <p class="text-[11px] text-slate-400 mt-1">若与 OpenClash 同机部署请填 127.0.0.1</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">External Controller API 端口</label>
+                                <input v-model.number="clashConfig.port" placeholder="9090" class="w-full text-xs font-mono bg-slate-50 text-slate-800 px-3 py-2 rounded-xl border border-slate-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <p class="text-[11px] text-slate-400 mt-1">OpenClash 外部控制默认端口 9090</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">RESTful 访问密钥 (Secret)</label>
+                                <input v-model="clashConfig.secret" type="password" placeholder="未设置可留空" class="w-full text-xs font-mono bg-slate-50 text-slate-800 px-3 py-2 rounded-xl border border-slate-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <p class="text-[11px] text-slate-400 mt-1">OpenClash 全局设置中的 Controller Secret</p>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-3 pt-2">
+                            <button @click="testAndSaveClash" :disabled="testingClash" class="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition flex items-center space-x-2 disabled:opacity-50">
+                                <svg v-if="testingClash" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                <span>{{ testingClash ? '正在测试连接...' : '测试并保存连接' }}</span>
+                            </button>
+                            <div v-if="clashTestResult.msg" :class="clashTestResult.ok ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-rose-700 bg-rose-50 border-rose-200'" class="px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center space-x-1.5">
+                                <svg v-if="clashTestResult.ok" class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                <svg v-else class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                <span>{{ clashTestResult.msg }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 模块 3: 安全与访问控制 -->
+                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-900 dark:text-white">安全与访问控制</h3>
+                                <p class="text-xs text-slate-500">为流量监控面板增加登录密码保护，避免局域网内任意人员随意查看</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span :class="authSettings.enabled ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'" class="text-[11px] px-2.5 py-1 rounded-full font-bold">
+                                {{ authSettings.enabled ? '已启用密码保护' : '未开启保护 (公开访问)' }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="p-6 space-y-5">
+                        <!-- 开启/关闭切换 -->
+                        <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200/70">
+                            <div>
+                                <div class="text-xs font-bold text-slate-800">启用管理访问密码</div>
+                                <div class="text-[11px] text-slate-500 mt-0.5">开启后，访问本监控面板或调用后台 API 必须输入正确密码</div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" v-model="authSettings.enabled" class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+
+                        <!-- 密码输入区域 -->
+                        <div v-if="authSettings.enabled" class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">设置新访问密码</label>
+                                <input v-model="authSettings.newPassword" type="password" placeholder="留空则保持原密码不变" class="w-full text-xs bg-slate-50 text-slate-800 px-3 py-2 rounded-xl border border-slate-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">再次确认新密码</label>
+                                <input v-model="authSettings.confirmPassword" type="password" placeholder="重复输入一次新密码" class="w-full text-xs bg-slate-50 text-slate-800 px-3 py-2 rounded-xl border border-slate-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-2">
+                            <button @click="saveAuthSettings" :disabled="savingAuth" class="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition disabled:opacity-50">
+                                {{ savingAuth ? '正在保存...' : '保存安全设置' }}
+                            </button>
+
+                            <button v-if="authSettings.enabled && hasToken" @click="doLogout" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-rose-200 transition">
+                                退出当前登录
+                            </button>
+                        </div>
+
+                        <div v-if="authMsg.text" :class="authMsg.ok ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-rose-700 bg-rose-50 border-rose-200'" class="px-3.5 py-2 rounded-xl border text-xs font-semibold">
+                            {{ authMsg.text }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 设备别名编辑 Modal -->
+    <div v-if="editModal.show" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-xl max-w-sm w-full p-6 border border-slate-100 dark:border-slate-800 text-slate-800 dark:text-slate-100">
+            <h3 class="text-base font-bold text-slate-900 dark:text-white mb-1">修改设备别名</h3>
+            <p class="text-xs text-slate-500 mb-4">修改后所有图表和表格中该 IP 将展示为此名称。</p>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">终端 IP</label>
+                    <input :value="editModal.ip" disabled class="w-full text-xs font-mono bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">别名备注</label>
+                    <input v-model="editModal.name" placeholder="例如：客厅 Apple TV" class="w-full text-xs bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end space-x-2">
+                <button @click="editModal.show = false" class="px-3 py-1.5 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition">取消</button>
+                <button @click="saveAlias" class="px-4 py-1.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition">保存生效</button>
+            </div>
+        </div>
+    </div>
+    <!-- 全局访问控制登录 Modal -->
+    <div v-if="loginModal.show" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-sm w-full p-8 border border-slate-100 dark:border-slate-800 text-center text-slate-800 dark:text-slate-100">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white mx-auto flex items-center justify-center shadow-lg shadow-blue-500/30 mb-5">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-black text-slate-900 dark:text-white">OpenClash 流量监控</h3>
+            <p class="text-xs text-slate-500 mt-1 mb-6">该监控面板已开启访问安全保护，请输入管理密码继续</p>
+            
+            <div class="space-y-4 text-left">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">访问密码</label>
+                    <input v-model="loginModal.password" 
+                           @keyup.enter="doLogin"
+                           type="password" 
+                           placeholder="请输入管理密码" 
+                           autofocus
+                           class="w-full text-sm bg-slate-50 text-slate-900 dark:text-white px-4 py-2.5 rounded-xl border border-slate-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                </div>
+                <div v-if="loginModal.error" class="text-xs text-rose-600 font-semibold bg-rose-50 border border-rose-200 px-3 py-2 rounded-xl">
+                    {{ loginModal.error }}
+                </div>
+                <button @click="doLogin" 
+                        :disabled="loginModal.loading"
+                        class="w-full py-2.5 rounded-xl text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/25 transition disabled:opacity-50 cursor-pointer">
+                    {{ loginModal.loading ? '正在验证...' : '立即登录' }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const { createApp, ref, computed, onMounted, nextTick } = Vue;
+
+    const OverviewIcon = { template: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>` };
+    const TrafficIcon = { template: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>` };
+    const DevicesIcon = { template: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>` };
+    const NodesIcon = { template: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>` };
+    const DomainsIcon = { template: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>` };
+    const LiveIcon = { template: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.072 0a5 5 0 010 7.07M13 12a1 1 0 11-2 0 1 1 0 012 0z"></path></svg>` };
+    const DetailsIcon = { template: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>` };
+    const SettingsIcon = { template: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>` };
+
+    createApp({
+        setup() {
+            const sidebarCollapsed = ref(false);
+            const isDark = ref(document.documentElement.classList.contains('dark'));
+
+            function toggleDarkMode() {
+                isDark.value = !isDark.value;
+                if (isDark.value) {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('op_traffic_theme', 'dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('op_traffic_theme', 'light');
+                }
+                nextTick(() => {
+                    renderTabCharts(currentTab.value);
+                });
+            }
+            function toggleSidebar() {
+                sidebarCollapsed.value = !sidebarCollapsed.value;
+                nextTick(() => {
+                    setTimeout(resizeAllCharts, 320);
+                });
+            }
+
+            const periods = [
+                { key: 'today', label: '今日' },
+                { key: '7d', label: '近7天' },
+                { key: '30d', label: '近30天' },
+                { key: 'all', label: '全部' }
+            ];
+            const period = ref('today');
+
+            const liveCount = ref(0);
+            const liveList = ref([]);
+            const liveSearch = ref('');
+            const domainSearch = ref('');
+            const lastUpdatedTime = ref(new Date().toLocaleTimeString());
+
+            const tabs = computed(() => [
+                { key: 'overview', label: '概览', iconComponent: OverviewIcon },
+                { key: 'consumption', label: '流量', iconComponent: TrafficIcon },
+                { key: 'devices', label: '设备', iconComponent: DevicesIcon, badge: summary.value.device_count },
+                { key: 'nodes', label: '节点', iconComponent: NodesIcon, badge: summary.value.node_count },
+                { key: 'domains', label: '域名', iconComponent: DomainsIcon, badge: domains.value.length },
+                { key: 'live', label: '连接', iconComponent: LiveIcon, badge: liveCount.value },
+                { key: 'details', label: '明细', iconComponent: DetailsIcon },
+                { key: 'settings', label: '设置', iconComponent: SettingsIcon }
+            ]);
+
+            const currentTab = ref('overview');
+
+            const currentPeriodLabel = computed(() => {
+                const map = { today: '今日累计', '7d': '最近 7 天', '30d': '最近 30 天', all: '全部历史累计' };
+                return map[period.value] || '当前区间';
+            });
+
+            const currentTabTitle = computed(() => {
+                const map = {
+                    overview: '概览大屏',
+                    consumption: '流量消耗汇总',
+                    devices: '设备流量分析',
+                    nodes: '节点承载分析',
+                    domains: '域名流量排行',
+                    live: '实时代理连接',
+                    details: '组合明细日志',
+                    settings: '系统与参数设置'
+                };
+                return map[currentTab.value] || '流量监控';
+            });
+
+            const currentTabSubtitle = computed(() => {
+                const map = {
+                    overview: '实时带宽曲线 · 设备分布 · 节点排名',
+                    consumption: '包含总消耗量、分设备、出口节点与目标域名详报',
+                    devices: '精准识别局域网真实客户端源 IP 与上下行构成',
+                    nodes: '已过滤直连流量，只统计走代理的有效数据',
+                    domains: '按目标网站/域名维度分析流量走向',
+                    live: '展示当前正在走节点通道的高速并发会话',
+                    details: '设备 × 分流规则 × 落地节点 完整维度',
+                    settings: '数据存储保留策略 · 旁路由与客户端配置 · 访问安全控制'
+                };
+                return map[currentTab.value] || '';
+            });
+
+            const loading = ref(false);
+            const summary = ref({ total_traffic: 0, total_up: 0, total_down: 0, device_count: 0, node_count: 0, domain_count: 0 });
+            const devices = ref([]);
+            const nodes = ref([]);
+            const rules = ref([]);
+            const domains = ref([]);
+            const details = ref([]);
+            const realtimeSpeed = ref({ up: 0, down: 0 });
+
+            // 排序状态控制 (支持自定义列排序，默认按总流量降序)
+            const sortState = ref({
+                devices: { key: 'total', order: 'desc' },
+                nodes: { key: 'total', order: 'desc' },
+                domains: { key: 'total', order: 'desc' },
+                live: { key: 'total', order: 'desc' },
+                details: { key: 'total', order: 'desc' }
+            });
+
+            function toggleSort(table, key) {
+                if (sortState.value[table].key === key) {
+                    sortState.value[table].order = sortState.value[table].order === 'desc' ? 'asc' : 'desc';
+                } else {
+                    sortState.value[table].key = key;
+                    sortState.value[table].order = 'desc';
+                }
+                resetTablePage(table);
+            }
+
+            function setSort(table, key) {
+                if (sortState.value[table].key === key) {
+                    sortState.value[table].order = sortState.value[table].order === 'desc' ? 'asc' : 'desc';
+                } else {
+                    sortState.value[table].key = key;
+                    sortState.value[table].order = 'desc';
+                }
+                resetTablePage(table);
+            }
+
+            function resetTablePage(table) {
+                if (table === 'devices') pageDevices.value = 1;
+                if (table === 'nodes') pageNodes.value = 1;
+                if (table === 'domains') pageDomains.value = 1;
+                if (table === 'live') pageLive.value = 1;
+                if (table === 'details') pageDetails.value = 1;
+            }
+
+            function sortHelper(list, key, order) {
+                if (!key || !list || !list.length) return list;
+                return [...list].sort((a, b) => {
+                    let va = a[key] ?? 0;
+                    let vb = b[key] ?? 0;
+                    if (typeof va === 'string') {
+                        return order === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+                    }
+                    return order === 'asc' ? va - vb : vb - va;
+                });
+            }
+
+            // 分页状态管理 (每页 10 条)
+            const pageSize = 10;
+            const pageDevices = ref(1);
+            const pageNodes = ref(1);
+            const pageDomains = ref(1);
+            const pageLive = ref(1);
+            const pageDetails = ref(1);
+
+            const filteredLiveList = computed(() => {
+                if (!liveSearch.value.trim()) return liveList.value;
+                const q = liveSearch.value.toLowerCase();
+                return liveList.value.filter(c => 
+                    (c.device_name && c.device_name.toLowerCase().includes(q)) ||
+                    (c.source_ip && c.source_ip.includes(q)) ||
+                    (c.host && c.host.toLowerCase().includes(q)) ||
+                    (c.node && c.node.toLowerCase().includes(q)) ||
+                    (c.rule && c.rule.toLowerCase().includes(q))
+                );
+            });
+
+            const filteredDomains = computed(() => {
+                if (!domainSearch.value.trim()) return domains.value;
+                const q = domainSearch.value.toLowerCase();
+                return domains.value.filter(d => d.host && d.host.toLowerCase().includes(q));
+            });
+
+            // 排序后的列表计算
+            const sortedDevices = computed(() => sortHelper(devices.value, sortState.value.devices.key, sortState.value.devices.order));
+            const totalPageDevices = computed(() => Math.max(1, Math.ceil(sortedDevices.value.length / pageSize)));
+            const pagedDevices = computed(() => {
+                const start = (pageDevices.value - 1) * pageSize;
+                return sortedDevices.value.slice(start, start + pageSize);
+            });
+
+            const sortedNodes = computed(() => sortHelper(nodes.value, sortState.value.nodes.key, sortState.value.nodes.order));
+            const totalPageNodes = computed(() => Math.max(1, Math.ceil(sortedNodes.value.length / pageSize)));
+            const pagedNodes = computed(() => {
+                const start = (pageNodes.value - 1) * pageSize;
+                return sortedNodes.value.slice(start, start + pageSize);
+            });
+
+            const sortedDomains = computed(() => sortHelper(filteredDomains.value, sortState.value.domains.key, sortState.value.domains.order));
+            const totalPageDomains = computed(() => Math.max(1, Math.ceil(sortedDomains.value.length / pageSize)));
+            const pagedDomains = computed(() => {
+                const start = (pageDomains.value - 1) * pageSize;
+                return sortedDomains.value.slice(start, start + pageSize);
+            });
+
+            const sortedLive = computed(() => sortHelper(filteredLiveList.value, sortState.value.live.key, sortState.value.live.order));
+            const totalPageLive = computed(() => Math.max(1, Math.ceil(sortedLive.value.length / pageSize)));
+            const pagedLive = computed(() => {
+                const start = (pageLive.value - 1) * pageSize;
+                return sortedLive.value.slice(start, start + pageSize);
+            });
+
+            const sortedDetails = computed(() => sortHelper(details.value, sortState.value.details.key, sortState.value.details.order));
+            const totalPageDetails = computed(() => Math.max(1, Math.ceil(sortedDetails.value.length / pageSize)));
+            const pagedDetails = computed(() => {
+                const start = (pageDetails.value - 1) * pageSize;
+                return sortedDetails.value.slice(start, start + pageSize);
+            });
+
+            const charts = {};
+            const editModal = ref({ show: false, ip: '', name: '' });
+
+            function formatNodeName(node, flag) {
+                if (!node) return '';
+                if (flag && flag !== '🌐' && node.startsWith(flag)) {
+                    return node;
+                }
+                return (flag && flag !== '🌐' ? (flag + ' ') : '') + node;
+            }
+
+            function formatBytes(bytes) {
+                if (!bytes || bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            function formatSpeed(bytesPerSec) {
+                if (!bytesPerSec || bytesPerSec === 0) return '0 B/s';
+                const k = 1024;
+                const sizes = ['B/s', 'KB/s', 'MB/s', 'GB/s'];
+                const i = Math.floor(Math.log(bytesPerSec) / Math.log(k));
+                return parseFloat((bytesPerSec / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            function getChart(domId) {
+                const dom = document.getElementById(domId);
+                if (!dom) return null;
+                if (!charts[domId]) {
+                    const inst = echarts.init(dom, null, { renderer: 'canvas' });
+                    charts[domId] = inst;
+                    const ro = new ResizeObserver(() => {
+                        if (dom.clientWidth > 50) {
+                            inst.resize();
+                        }
+                    });
+                    ro.observe(dom);
+                }
+                return charts[domId];
+            }
+
+            function resizeAllCharts() {
+                Object.values(charts).forEach(c => {
+                    try { c.resize(); } catch(e){}
+                });
+            }
+
+            function switchTab(key) {
+                currentTab.value = key;
+                nextTick(() => {
+                    if (key === 'settings') {
+                        loadStorageInfo();
+                    } else {
+                        renderTabCharts(key);
+                        setTimeout(resizeAllCharts, 80);
+                    }
+                });
+            }
+
+
+            // 访问控制与认证状态
+            const hasToken = computed(() => !!localStorage.getItem('op_traffic_token'));
+            const loginModal = ref({ show: false, password: '', error: '', loading: false });
+            const authSettings = ref({ enabled: false, newPassword: '', confirmPassword: '' });
+            const savingAuth = ref(false);
+            const authMsg = ref({ ok: false, text: '' });
+
+            // 统一带 Auth 头的 fetch 封装
+            async function authFetch(url, options = {}) {
+                options.headers = options.headers || {};
+                const token = localStorage.getItem('op_traffic_token') || '';
+                if (token) {
+                    options.headers['Authorization'] = `Bearer ${token}`;
+                }
+                const res = await fetch(url, options);
+                if (res.status === 401) {
+                    authSettings.value.enabled = true;
+                    loginModal.value.show = true;
+                    loginModal.value.password = '';
+                    loginModal.value.error = '请登录以访问监控数据';
+                    throw new Error('Unauthorized');
+                }
+                return res;
+            }
+
+            async function checkAuthStatus() {
+                try {
+                    const token = localStorage.getItem('op_traffic_token') || '';
+                    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+                    const res = await fetch('/api/auth/status', { headers });
+                    const data = await res.json();
+                    authSettings.value.enabled = data.auth_enabled;
+                    if (data.auth_enabled && !data.is_authenticated) {
+                        loginModal.value.show = true;
+                        return false;
+                    } else {
+                        loginModal.value.show = false;
+                        return true;
+                    }
+                } catch (e) {
+                    console.error("检查认证状态异常", e);
+                    return true;
+                }
+            }
+
+            async function doLogin() {
+                if (!loginModal.value.password) {
+                    loginModal.value.error = '请输入密码';
+                    return;
+                }
+                loginModal.value.loading = true;
+                loginModal.value.error = '';
+                try {
+                    const res = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ password: loginModal.value.password })
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.status === 'ok') {
+                        localStorage.setItem('op_traffic_token', data.token);
+                        loginModal.value.show = false;
+                        loginModal.value.password = '';
+                        fetchData();
+                    } else {
+                        loginModal.value.error = data.message || '密码错误';
+                    }
+                } catch (e) {
+                    loginModal.value.error = '连接服务器失败: ' + e;
+                } finally {
+                    loginModal.value.loading = false;
+                }
+            }
+
+            async function doLogout() {
+                try {
+                    await authFetch('/api/auth/logout', { method: 'POST' });
+                } catch (e) {}
+                localStorage.removeItem('op_traffic_token');
+                loginModal.value.show = true;
+                loginModal.value.password = '';
+                loginModal.value.error = '';
+            }
+
+            async function saveAuthSettings() {
+                if (authSettings.value.enabled) {
+                    if (authSettings.value.newPassword || authSettings.value.confirmPassword) {
+                        if (authSettings.value.newPassword !== authSettings.value.confirmPassword) {
+                            authMsg.value = { ok: false, text: '两次输入的新密码不一致，请重新输入' };
+                            return;
+                        }
+                    }
+                }
+                savingAuth.value = true;
+                authMsg.value = { ok: false, text: '' };
+                try {
+                    const res = await authFetch('/api/settings/update_auth', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            enabled: authSettings.value.enabled,
+                            new_password: authSettings.value.newPassword
+                        })
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.status === 'ok') {
+                        authMsg.value = { ok: true, text: '安全设置已成功保存并立即生效！' };
+                        authSettings.value.newPassword = '';
+                        authSettings.value.confirmPassword = '';
+                        setTimeout(() => { authMsg.value = { ok: false, text: '' }; }, 3500);
+                    } else {
+                        authMsg.value = { ok: false, text: data.message || '保存失败' };
+                    }
+                } catch (e) {
+                    authMsg.value = { ok: false, text: '请求异常: ' + e };
+                } finally {
+                    savingAuth.value = false;
+                }
+            }
+
+            // 数据储存与清理管理
+            const storageInfo = ref({
+                db_size_bytes: 0,
+                traffic_rows: 0,
+                domain_rows: 0,
+                earliest_date: '',
+                latest_date: '',
+                retention_days: 90,
+                clash_host: '127.0.0.1',
+                clash_port: 9090,
+                clash_secret: ''
+            });
+            const loadingStorage = ref(false);
+            const retentionDays = ref(90);
+            const savingRetention = ref(false);
+            const retentionSavedTip = ref(false);
+            const cleaningData = ref(false);
+
+            // OpenClash 连接参数
+            const clashConfig = ref({
+                host: '127.0.0.1',
+                port: 9090,
+                secret: ''
+            });
+            const testingClash = ref(false);
+            const clashTestResult = ref({ ok: false, msg: '' });
+
+            async function loadStorageInfo() {
+                loadingStorage.value = true;
+                try {
+                    const res = await authFetch('/api/settings/storage_info');
+                    const data = await res.json();
+                    storageInfo.value = data;
+                    retentionDays.value = data.retention_days;
+                    clashConfig.value.host = data.clash_host;
+                    clashConfig.value.port = data.clash_port;
+                    clashConfig.value.secret = data.clash_secret;
+                } catch (e) {
+                    console.error("加载存储与参数配置失败", e);
+                } finally {
+                    loadingStorage.value = false;
+                }
+            }
+
+            async function saveRetentionPolicy() {
+                savingRetention.value = true;
+                retentionSavedTip.value = false;
+                try {
+                    const res = await authFetch('/api/settings/save_clash', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            host: clashConfig.value.host,
+                            port: clashConfig.value.port,
+                            secret: clashConfig.value.secret,
+                            retention_days: retentionDays.value
+                        })
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.status === 'ok') {
+                        retentionSavedTip.value = true;
+                        setTimeout(() => { retentionSavedTip.value = false; }, 3500);
+                        loadStorageInfo();
+                    } else {
+                        alert("保存失败: " + (data.message || '未知错误'));
+                    }
+                } catch (e) {
+                    alert("请求异常: " + e);
+                } finally {
+                    savingRetention.value = false;
+                }
+            }
+
+            async function triggerManualClean(target) {
+                let confirmMsg = "";
+                let body = {};
+                if (target === 'all') {
+                    confirmMsg = "【警告】确定要清空全部历史流量统计数据吗？此操作无法撤销！";
+                    body = { clean_all: true };
+                } else {
+                    confirmMsg = `确定要清理 ${target} 天前的所有历史数据吗？`;
+                    body = { days: target, clean_all: false };
+                }
+                if (!confirm(confirmMsg)) return;
+
+                cleaningData.value = true;
+                try {
+                    const res = await authFetch('/api/settings/clean_data', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body)
+                    });
+                    const data = await res.json();
+                    alert(data.message || "清理完成");
+                    loadStorageInfo();
+                    fetchData();
+                } catch (e) {
+                    alert("清理失败: " + e);
+                } finally {
+                    cleaningData.value = false;
+                }
+            }
+
+            async function testAndSaveClash() {
+                testingClash.value = true;
+                clashTestResult.value = { ok: false, msg: '' };
+                try {
+                    const res = await authFetch('/api/settings/save_clash', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            host: clashConfig.value.host,
+                            port: clashConfig.value.port,
+                            secret: clashConfig.value.secret,
+                            retention_days: retentionDays.value
+                        })
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.status === 'ok') {
+                        clashTestResult.value = { ok: true, msg: data.message };
+                        loadStorageInfo();
+                        setTimeout(fetchData, 1000);
+                    } else {
+                        clashTestResult.value = { ok: false, msg: data.message || '连接测试失败' };
+                    }
+                } catch (e) {
+                    clashTestResult.value = { ok: false, msg: '请求出错: ' + e };
+                } finally {
+                    testingClash.value = false;
+                }
+            }
+
+            async function fetchData() {
+                loading.value = true;
+                try {
+                    const res = await authFetch(`/api/stats?period=${period.value}`);
+                    const data = await res.json();
+                    summary.value = data.summary;
+                    devices.value = data.devices;
+                    nodes.value = data.nodes;
+                    rules.value = data.rules;
+                    domains.value = data.domains || [];
+                    details.value = data.details;
+                    lastUpdatedTime.value = new Date().toLocaleTimeString();
+
+                    await fetchRealtimeSpeed();
+                    await fetchLive();
+                    await nextTick();
+                    renderTabCharts(currentTab.value);
+                } catch (e) {
+                    console.error("加载数据异常", e);
+                } finally {
+                    loading.value = false;
+                }
+            }
+
+            async function fetchRealtimeSpeed() {
+                try {
+                    const res = await authFetch('/api/traffic_realtime');
+                    const data = await res.json();
+                    realtimeSpeed.value = data.current;
+                    updateSpeedChart(data.history);
+                } catch (e) {
+                    console.error("获取实时速率失败", e);
+                }
+            }
+
+            async function fetchLive() {
+                try {
+                    const res = await authFetch('/api/live');
+                    const data = await res.json();
+                    liveList.value = data.connections;
+                    liveCount.value = data.count;
+                    if (currentTab.value === 'live') {
+                        renderLiveChart();
+                    }
+                } catch (e) {
+                    console.error("加载实时连接失败", e);
+                }
+            }
+
+            function updateSpeedChart(historyList) {
+                if (!historyList || !historyList.length) return;
+                const chart = getChart('realtimeSpeedChart');
+                if (!chart) return;
+
+                const times = historyList.map(h => h.time);
+                const downs = historyList.map(h => h.down);
+                const ups = historyList.map(h => h.up);
+
+                chart.setOption({
+                    animation: false,
+                    tooltip: {
+                        trigger: 'axis',
+                        formatter: function(params) {
+                            let str = `<div class="text-xs font-mono"><b>${params[0].axisValue}</b><br/>`;
+                            params.forEach(p => {
+                                const colorSpan = `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:9px;height:9px;background-color:${p.color.colorStops ? p.color.colorStops[0].color : p.color};"></span>`;
+                                str += `${colorSpan}${p.seriesName}: <b>${formatSpeed(p.value)}</b><br/>`;
+                            });
+                            str += '</div>';
+                            return str;
+                        }
+                    },
+                    legend: { data: ['下行速率', '上行速率'], right: '2%', top: '0%' },
+                    grid: { left: '2%', right: '3%', bottom: '3%', top: '15%', containLabel: true },
+                    xAxis: {
+                        type: 'category',
+                        boundaryGap: false,
+                        data: times,
+                        axisLine: { lineStyle: { color: isDark.value ? '#334155' : '#e2e8f0' } },
+                        axisLabel: { color: isDark.value ? '#94a3b8' : '#64748b', fontSize: 11 }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        splitLine: { lineStyle: { color: isDark.value ? '#1e293b' : '#f1f5f9', type: 'dashed' } },
+                        axisLabel: { color: isDark.value ? '#94a3b8' : '#64748b', fontSize: 11, formatter: (v) => formatSpeed(v) }
+                    },
+                    series: [
+                        {
+                            name: '下行速率',
+                            type: 'line',
+                            smooth: true,
+                            showSymbol: false,
+                            data: downs,
+                            lineStyle: { width: 2.5, color: '#2563eb' },
+                            areaStyle: {
+                                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                    { offset: 0, color: 'rgba(37, 99, 235, 0.35)' },
+                                    { offset: 1, color: 'rgba(37, 99, 235, 0.02)' }
+                                ])
+                            }
+                        },
+                        {
+                            name: '上行速率',
+                            type: 'line',
+                            smooth: true,
+                            showSymbol: false,
+                            data: ups,
+                            lineStyle: { width: 2, color: '#6366f1' },
+                            areaStyle: {
+                                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                    { offset: 0, color: 'rgba(99, 102, 241, 0.3)' },
+                                    { offset: 1, color: 'rgba(99, 102, 241, 0.02)' }
+                                ])
+                            }
+                        }
+                    ]
+                });
+            }
+
+            function renderTabCharts(tabKey) {
+                if (tabKey === 'overview') {
+                    const pChart = getChart('devicePieChart');
+                    if (pChart) {
+                        const pieData = devices.value.map(d => ({ name: d.name, value: d.total }));
+                        pChart.setOption({
+                            tooltip: { trigger: 'item', formatter: (p) => `${p.name}<br/><b>${formatBytes(p.value)}</b> (${p.percent}%)` },
+                            legend: { bottom: '0%', left: 'center', type: 'scroll' },
+                            series: [{
+                                type: 'pie',
+                                radius: ['45%', '70%'],
+                                center: ['50%', '45%'],
+                                itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
+                                data: pieData.length ? pieData : [{ name: '暂无数据', value: 0 }]
+                            }]
+                        });
+                    }
+                    const bChart = getChart('nodeBarChart');
+                    if (bChart) {
+                        const topNodes = nodes.value.slice(0, 8).reverse();
+                        bChart.setOption({
+                            tooltip: { trigger: 'axis', formatter: (p) => `${p[0].name}<br/>消耗: <b>${formatBytes(p[0].value)}</b>` },
+                            grid: { left: '3%', right: '8%', bottom: '3%', top: '3%', containLabel: true },
+                            xAxis: { type: 'value', axisLabel: { formatter: (v) => formatBytes(v) } },
+                            yAxis: { type: 'category', data: topNodes.map(n => n.node), axisLabel: { width: 140, overflow: 'truncate' } },
+                            series: [{ type: 'bar', data: topNodes.map(n => n.total), itemStyle: { borderRadius: [0, 6, 6, 0], color: '#3b82f6' } }]
+                        });
+                    }
+                } else if (tabKey === 'devices') {
+                    const chart = getChart('devicePageChart');
+                    if (chart) {
+                        const topDev = devices.value.slice(0, 8);
+                        chart.setOption({
+                            tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                            legend: { right: '3%' },
+                            grid: { left: '3%', right: '4%', bottom: '3%', top: '15%', containLabel: true },
+                            xAxis: { type: 'category', data: topDev.map(d => d.name), axisLabel: { interval: 0, rotate: 15 } },
+                            yAxis: { type: 'value', axisLabel: { formatter: (v) => formatBytes(v) } },
+                            series: [
+                                { name: '下行', type: 'bar', data: topDev.map(d => d.download), itemStyle: { color: '#3b82f6', borderRadius: [4, 4, 0, 0] } },
+                                { name: '上行', type: 'bar', data: topDev.map(d => d.upload), itemStyle: { color: '#6366f1', borderRadius: [4, 4, 0, 0] } }
+                            ]
+                        });
+                    }
+                } else if (tabKey === 'nodes') {
+                    const chart = getChart('nodePageChart');
+                    if (chart) {
+                        const topN = nodes.value.slice(0, 8).reverse();
+                        chart.setOption({
+                            tooltip: { trigger: 'axis' },
+                            grid: { left: '3%', right: '8%', bottom: '3%', top: '3%', containLabel: true },
+                            xAxis: { type: 'value', axisLabel: { formatter: (v) => formatBytes(v) } },
+                            yAxis: { type: 'category', data: topN.map(n => n.node), axisLabel: { width: 160, overflow: 'truncate' } },
+                            series: [{ type: 'bar', data: topN.map(n => n.total), itemStyle: { color: '#0ea5e9', borderRadius: [0, 6, 6, 0] } }]
+                        });
+                    }
+                } else if (tabKey === 'domains') {
+                    const chart = getChart('domainPageChart');
+                    if (chart) {
+                        const topD = domains.value.slice(0, 10).reverse();
+                        chart.setOption({
+                            tooltip: { trigger: 'axis', formatter: (p) => `${p[0].name}<br/>消耗: <b>${formatBytes(p[0].value)}</b>` },
+                            grid: { left: '3%', right: '8%', bottom: '3%', top: '3%', containLabel: true },
+                            xAxis: { type: 'value', axisLabel: { formatter: (v) => formatBytes(v) } },
+                            yAxis: { type: 'category', data: topD.map(d => d.host), axisLabel: { width: 180, overflow: 'truncate', fontFamily: 'monospace' } },
+                            series: [{ type: 'bar', data: topD.map(d => d.total), itemStyle: { color: '#8b5cf6', borderRadius: [0, 6, 6, 0] } }]
+                        });
+                    }
+                } else if (tabKey === 'live') {
+                    renderLiveChart();
+                } else if (tabKey === 'details') {
+                    const chart = getChart('rulePageChart');
+                    if (chart) {
+                        const topR = rules.value.slice(0, 10).reverse();
+                        chart.setOption({
+                            tooltip: { trigger: 'axis' },
+                            grid: { left: '3%', right: '8%', bottom: '3%', top: '3%', containLabel: true },
+                            xAxis: { type: 'value', axisLabel: { formatter: (v) => formatBytes(v) } },
+                            yAxis: { type: 'category', data: topR.map(r => r.rule), axisLabel: { width: 160, overflow: 'truncate' } },
+                            series: [{ type: 'bar', data: topR.map(r => r.total), itemStyle: { color: '#10b981', borderRadius: [0, 6, 6, 0] } }]
+                        });
+                    }
+                }
+            }
+
+            function renderLiveChart() {
+                const chart = getChart('livePageChart');
+                if (!chart) return;
+                const devCounts = {};
+                liveList.value.forEach(c => {
+                    const dev = c.device_name || c.source_ip;
+                    devCounts[dev] = (devCounts[dev] || 0) + 1;
+                });
+                const labels = Object.keys(devCounts);
+                const values = Object.values(devCounts);
+
+                chart.setOption({
+                    tooltip: { trigger: 'axis' },
+                    grid: { left: '3%', right: '3%', bottom: '3%', top: '15%', containLabel: true },
+                    xAxis: { type: 'category', data: labels.length ? labels : ['暂无连接'], axisLabel: { interval: 0 } },
+                    yAxis: { type: 'value', minInterval: 1, name: '并发路数' },
+                    series: [{ type: 'bar', data: values.length ? values : [0], barMaxWidth: 40, itemStyle: { color: '#10b981', borderRadius: [6, 6, 0, 0] } }]
+                });
+            }
+
+            function changePeriod(p) {
+                period.value = p;
+                pageDevices.value = 1;
+                pageNodes.value = 1;
+                pageDomains.value = 1;
+                pageDetails.value = 1;
+                fetchData();
+            }
+
+            function openEditAlias(d) {
+                editModal.value = { show: true, ip: d.ip, name: d.name };
+            }
+
+            async function saveAlias() {
+                if (!editModal.value.name.trim()) return;
+                try {
+                    await authFetch('/api/alias', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ip: editModal.value.ip, name: editModal.value.name.trim() })
+                    });
+                    editModal.value.show = false;
+                    fetchData();
+                } catch (e) {
+                    alert("保存别名失败: " + e);
+                }
+            }
+
+            onMounted(async () => {
+                const authed = await checkAuthStatus();
+                if (authed) {
+                    fetchData();
+                    loadStorageInfo();
+                }
+                setInterval(fetchRealtimeSpeed, 1500);
+                setInterval(fetchLive, 3000);
+                setInterval(fetchData, 15000);
+
+                window.addEventListener('resize', resizeAllCharts);
+                setTimeout(resizeAllCharts, 300);
+            });
+
+            return {
+                sidebarCollapsed, toggleSidebar, isDark, toggleDarkMode,
+                periods, period, changePeriod, currentPeriodLabel,
+                tabs, currentTab, switchTab, currentTabTitle, currentTabSubtitle,
+                loading, summary, devices, nodes, rules, domains, details,
+                realtimeSpeed, liveList, liveCount, liveSearch, domainSearch,
+                filteredLiveList, filteredDomains,
+                sortState, toggleSort, setSort,
+                pageSize,
+                pageDevices, totalPageDevices, pagedDevices,
+                pageNodes, totalPageNodes, pagedNodes,
+                pageDomains, totalPageDomains, pagedDomains,
+                pageLive, totalPageLive, pagedLive,
+                pageDetails, totalPageDetails, pagedDetails,
+                lastUpdatedTime, editModal, openEditAlias, saveAlias,
+                formatNodeName, formatBytes, formatSpeed, fetchData,
+                hasToken, loginModal, doLogin, doLogout,
+                authSettings, savingAuth, authMsg, saveAuthSettings,
+                storageInfo, loadingStorage, retentionDays, savingRetention,
+                retentionSavedTip, cleaningData, loadStorageInfo, saveRetentionPolicy, triggerManualClean,
+                clashConfig, testingClash, clashTestResult, testAndSaveClash
+            };
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>

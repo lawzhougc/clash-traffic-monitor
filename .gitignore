@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.bak
+*.log
+Country.mmdb
+deploy_and_verify.py
+update_*.py
+refine_*.py
+fix_*.py
+test_*.py
+data/
+.vscode/
+.idea/
