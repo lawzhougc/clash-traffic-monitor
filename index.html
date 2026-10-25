@@ -31,11 +31,11 @@
         ::-webkit-scrollbar-track { background: transparent; }
     </style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 antialiased overflow-hidden font-sans transition-colors duration-150">
+<body class="bg-slate-50 dark:bg-[#0B0F19] text-slate-800 dark:text-slate-100 antialiased overflow-hidden font-sans transition-colors duration-200">
 <div id="app" v-cloak class="flex h-screen w-full overflow-hidden">
     <!-- ================= 左侧侧边栏导航 (可一键收起/展开，两字极简菜单) ================= -->
     <aside :class="sidebarCollapsed ? 'w-20 min-w-[5rem] max-w-[5rem]' : 'w-60 min-w-[15rem] max-w-[15rem]'"
-           class="bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between shrink-0 shadow-sm z-30 select-none transition-all duration-300">
+           class="bg-white dark:bg-[#111827] border-r border-slate-200 dark:border-slate-800/80 flex flex-col justify-between shrink-0 shadow-sm z-30 select-none transition-all duration-300">
         <div>
             <!-- 系统品牌与折叠按钮 (收起时图标完全居中，杜绝遮挡裁切) -->
             <div v-if="sidebarCollapsed" class="h-16 border-b border-slate-100 dark:border-slate-800 flex items-center justify-center">
@@ -126,7 +126,7 @@
     <!-- ================= 右侧主视窗区域 ================= -->
     <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         <!-- 顶部轻量级 Header -->
-        <header class="h-16 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between shrink-0 z-20">
+        <header class="h-16 bg-white/90 dark:bg-[#111827]/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/80 px-6 flex items-center justify-between shrink-0 z-20">
             <div class="flex items-center space-x-3">
                 <h2 class="text-lg font-black text-slate-900 dark:text-white dark:text-white tracking-tight">{{ currentTabTitle }}</h2>
                 <span class="text-xs text-slate-300 dark:text-slate-700 font-normal hidden sm:inline">|</span>
@@ -173,10 +173,10 @@
             <div v-show="currentTab === 'overview'" class="space-y-6">
                 <!-- 4 核心统计指标卡片 -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex flex-col justify-between">
+                    <div class="bg-white dark:bg-[#111827] rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-xs flex flex-col justify-between transition-colors">
                         <div class="flex items-center justify-between mb-2">
                             <span class="text-xs font-bold uppercase tracking-wider text-slate-500">消耗总流量 (GLaDOS)</span>
-                            <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                            <div class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20 flex items-center justify-center shrink-0 transition-colors">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             </div>
                         </div>
@@ -189,10 +189,10 @@
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex flex-col justify-between">
+                    <div class="bg-white dark:bg-[#111827] rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-xs flex flex-col justify-between transition-colors">
                         <div class="flex items-center justify-between mb-2">
                             <span class="text-xs font-bold uppercase tracking-wider text-slate-500">活跃代理设备</span>
-                            <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                            <div class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20 flex items-center justify-center shrink-0 transition-colors">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                             </div>
                         </div>
@@ -205,10 +205,10 @@
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex flex-col justify-between">
+                    <div class="bg-white dark:bg-[#111827] rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-xs flex flex-col justify-between transition-colors">
                         <div class="flex items-center justify-between mb-2">
                             <span class="text-xs font-bold uppercase tracking-wider text-slate-500">承载 GLaDOS 节点</span>
-                            <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                            <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/20 flex items-center justify-center shrink-0 transition-colors">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
                             </div>
                         </div>
@@ -221,10 +221,10 @@
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex flex-col justify-between">
+                    <div class="bg-white dark:bg-[#111827] rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-xs flex flex-col justify-between transition-colors">
                         <div class="flex items-center justify-between mb-2">
                             <span class="text-xs font-bold uppercase tracking-wider text-slate-500">即时下行 / 上行</span>
-                            <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                            <div class="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-500/20 flex items-center justify-center shrink-0 transition-colors">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
                             </div>
                         </div>
@@ -243,7 +243,7 @@
                 </div>
 
                 <!-- 实时网络速率折线图 -->
-                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs w-full">
+                <div class="bg-white dark:bg-[#111827] rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-xs w-full transition-colors">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
                         <div>
                             <div class="flex items-center space-x-2">
@@ -253,10 +253,10 @@
                             <p class="text-xs text-slate-500 mt-1">瞬时上传与下载吞吐速率实时曲线</p>
                         </div>
                         <div class="flex items-center space-x-3 text-xs font-mono">
-                            <span class="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 font-bold border border-blue-100">
+                            <span class="px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 font-bold border border-blue-100 dark:border-blue-500/20">
                                 下行: {{ formatSpeed(realtimeSpeed.down) }}
                             </span>
-                            <span class="px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 font-bold border border-indigo-100">
+                            <span class="px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 font-bold border border-indigo-100 dark:border-indigo-500/20">
                                 上行: {{ formatSpeed(realtimeSpeed.up) }}
                             </span>
                         </div>
@@ -268,7 +268,7 @@
 
                 <!-- 两个对比分析图表 -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
-                    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs w-full">
+                    <div class="bg-white dark:bg-[#111827] rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-xs w-full transition-colors">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-base font-bold text-slate-900 dark:text-white">📱 设备流量占比排行</h3>
                             <span class="text-xs text-slate-400">按总消耗</span>
@@ -278,7 +278,7 @@
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs w-full">
+                    <div class="bg-white dark:bg-[#111827] rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-xs w-full transition-colors">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-base font-bold text-slate-900 dark:text-white">⚡ GLaDOS 节点使用分布</h3>
                             <span class="text-xs text-slate-400">TOP 8 节点</span>
@@ -320,7 +320,7 @@
                 </div>
 
                 <!-- 1. 分设备消耗量 (带表头排序与分页) -->
-                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+                <div class="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-xs overflow-hidden transition-colors">
                     <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
                         <span class="text-base font-bold text-slate-900 dark:text-white">📱 1. 分设备消耗量</span>
                         <div class="flex items-center space-x-2 text-xs">
@@ -394,7 +394,7 @@
                 </div>
 
                 <!-- 2. 节点消耗量 (带表头排序与分页) -->
-                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+                <div class="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-xs overflow-hidden transition-colors">
                     <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
                         <span class="text-base font-bold text-slate-900 dark:text-white">⚡ 2. 节点消耗量</span>
                         <div class="flex items-center space-x-2 text-xs">
@@ -470,7 +470,7 @@
                 </div>
 
                 <!-- 3. 域名消耗量 (带表头排序与分页) -->
-                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+                <div class="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-xs overflow-hidden transition-colors">
                     <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-800/50">
                         <span class="text-base font-bold text-slate-900 dark:text-white">🌐 3. 域名消耗量</span>
                         <div class="flex items-center space-x-3">
@@ -480,7 +480,7 @@
                                 <button @click="setSort('domains', 'upload')" :class="sortState.domains.key === 'upload' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2 py-1 rounded-lg shadow-2xs">上行 {{ sortState.domains.key === 'upload' ? (sortState.domains.order === 'desc' ? '↓' : '↑') : '' }}</button>
                                 <button @click="setSort('domains', 'total')" :class="sortState.domains.key === 'total' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2 py-1 rounded-lg shadow-2xs">总消耗 {{ sortState.domains.key === 'total' ? (sortState.domains.order === 'desc' ? '↓' : '↑') : '' }}</button>
                             </div>
-                            <input v-model="domainSearch" placeholder="搜索域名..." class="text-xs px-3.5 py-1.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 w-48 bg-white shadow-2xs">
+                            <input v-model="domainSearch" placeholder="搜索域名..." class="text-xs px-3.5 py-1.5 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 w-48 bg-white dark:bg-[#1A2234] text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 shadow-2xs transition">
                         </div>
                     </div>
                     <div class="overflow-x-auto">
@@ -550,7 +550,7 @@
             <!-- ================= TAB 3: 设备 (带双柱图 + 表格排序 + 分页) ================= -->
             <div v-show="currentTab === 'devices'" class="space-y-6">
                 <!-- 设备上下行双柱对比分析图 -->
-                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs w-full">
+                <div class="bg-white dark:bg-[#111827] rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-xs w-full transition-colors">
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h3 class="text-base font-bold text-slate-900 dark:text-white">📊 各设备上下行流量消耗对比</h3>
@@ -563,7 +563,7 @@
                     </div>
                 </div>
 
-                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+                <div class="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-xs overflow-hidden transition-colors">
                     <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-800/50">
                         <div>
                             <h3 class="text-base font-bold text-slate-900 dark:text-white">局域网设备列表</h3>
@@ -647,7 +647,7 @@
 
             <!-- ================= TAB 4: 节点 (带排行图 + 表格排序 + 分页) ================= -->
             <div v-show="currentTab === 'nodes'" class="space-y-6">
-                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs w-full">
+                <div class="bg-white dark:bg-[#111827] rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-xs w-full transition-colors">
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h3 class="text-base font-bold text-slate-900 dark:text-white">⚡ GLaDOS 落地节点承载量排行</h3>
@@ -660,7 +660,7 @@
                     </div>
                 </div>
 
-                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+                <div class="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-xs overflow-hidden transition-colors">
                     <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-800/50">
                         <h3 class="text-base font-bold text-slate-900 dark:text-white">GLaDOS 订阅节点流量列表</h3>
                         <div class="flex items-center space-x-2 text-xs">
@@ -738,7 +738,7 @@
 
             <!-- ================= TAB 5: 域名 (带排行图 + 表格排序 + 分页) ================= -->
             <div v-show="currentTab === 'domains'" class="space-y-6">
-                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs w-full">
+                <div class="bg-white dark:bg-[#111827] rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-xs w-full transition-colors">
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h3 class="text-base font-bold text-slate-900 dark:text-white">🌐 热门访问域名流量排行 TOP 10</h3>
@@ -751,7 +751,7 @@
                     </div>
                 </div>
 
-                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+                <div class="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-xs overflow-hidden transition-colors">
                     <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-800/50">
                         <h3 class="text-base font-bold text-slate-900 dark:text-white">域名流量详细列表</h3>
                         <div class="flex items-center space-x-3">
@@ -761,7 +761,7 @@
                                 <button @click="setSort('domains', 'upload')" :class="sortState.domains.key === 'upload' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2 py-1 rounded-lg shadow-2xs">上行 {{ sortState.domains.key === 'upload' ? (sortState.domains.order === 'desc' ? '↓' : '↑') : '' }}</button>
                                 <button @click="setSort('domains', 'total')" :class="sortState.domains.key === 'total' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2 py-1 rounded-lg shadow-2xs">总消耗 {{ sortState.domains.key === 'total' ? (sortState.domains.order === 'desc' ? '↓' : '↑') : '' }}</button>
                             </div>
-                            <input v-model="domainSearch" placeholder="搜索域名..." class="text-xs px-3.5 py-1.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 w-44 bg-white shadow-2xs">
+                            <input v-model="domainSearch" placeholder="搜索域名..." class="text-xs px-3.5 py-1.5 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 w-44 bg-white dark:bg-[#1A2234] text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 shadow-2xs transition">
                         </div>
                     </div>
                     <div class="overflow-x-auto">
@@ -830,7 +830,7 @@
 
             <!-- ================= TAB 6: 连接 (带并发图 + 表格排序 + 分页) ================= -->
             <div v-show="currentTab === 'live'" class="space-y-6">
-                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs w-full">
+                <div class="bg-white dark:bg-[#111827] rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-xs w-full transition-colors">
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h3 class="text-base font-bold text-slate-900 dark:text-white">🟢 实时并发连接设备分布</h3>
@@ -843,7 +843,7 @@
                     </div>
                 </div>
 
-                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+                <div class="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-xs overflow-hidden transition-colors">
                     <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-800/50">
                         <h3 class="text-base font-bold text-slate-900 dark:text-white">当前活跃连接明细表</h3>
                         <div class="flex items-center space-x-3">
@@ -853,7 +853,7 @@
                                 <button @click="setSort('live', 'upload')" :class="sortState.live.key === 'upload' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2 py-1 rounded-lg shadow-2xs">上行 {{ sortState.live.key === 'upload' ? (sortState.live.order === 'desc' ? '↓' : '↑') : '' }}</button>
                                 <button @click="setSort('live', 'total')" :class="sortState.live.key === 'total' ? 'bg-blue-600 text-white font-bold' : 'bg-white text-slate-600 border border-slate-200'" class="px-2 py-1 rounded-lg shadow-2xs">总流量 {{ sortState.live.key === 'total' ? (sortState.live.order === 'desc' ? '↓' : '↑') : '' }}</button>
                             </div>
-                            <input v-model="liveSearch" placeholder="搜索设备、域名或节点..." class="text-xs px-3.5 py-1.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 w-44 bg-white shadow-2xs">
+                            <input v-model="liveSearch" placeholder="搜索设备、域名或节点..." class="text-xs px-3.5 py-1.5 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 w-44 bg-white dark:bg-[#1A2234] text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 shadow-2xs transition">
                         </div>
                     </div>
                     <div class="overflow-x-auto">
@@ -903,7 +903,7 @@
                                         </div>
                                     </td>
                                     <td class="py-3 px-4">
-                                        <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">{{ c.rule }}</span>
+                                        <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60">{{ c.rule }}</span>
                                     </td>
                                     <td class="py-3 px-4">
                                         <span class="inline-flex items-center px-2 py-0.5 rounded bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 font-medium border border-sky-100 dark:border-sky-800">
@@ -935,7 +935,7 @@
 
             <!-- ================= TAB 7: 明细 (带规则图 + 表格排序 + 分页) ================= -->
             <div v-show="currentTab === 'details'" class="space-y-6">
-                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs w-full">
+                <div class="bg-white dark:bg-[#111827] rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-xs w-full transition-colors">
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h3 class="text-base font-bold text-slate-900 dark:text-white">🎯 高频出国分流规则消耗分布</h3>
@@ -948,7 +948,7 @@
                     </div>
                 </div>
 
-                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+                <div class="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-xs overflow-hidden transition-colors">
                     <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-800/50">
                         <div>
                             <h3 class="text-base font-bold text-slate-900 dark:text-white">历史流量组合明细 (设备 × 规则 × 节点)</h3>
@@ -1003,7 +1003,7 @@
                                         <span class="text-[11px] text-slate-400 block font-mono">{{ d.device_ip }}</span>
                                     </td>
                                     <td class="py-3 px-4">
-                                        <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">{{ d.rule }}</span>
+                                        <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60">{{ d.rule }}</span>
                                     </td>
                                     <td class="py-3 px-4">
                                         <span class="px-2 py-0.5 rounded bg-sky-50 text-sky-700 font-medium">{{ d.node }}</span>
@@ -1033,23 +1033,23 @@
             <!-- ================= Tab 8: 系统与参数设置 (存储、客户端、访问控制) ================= -->
             <div v-show="currentTab === 'settings'" class="space-y-6 max-w-5xl mx-auto pb-10">
                 <!-- 顶部引导卡片 -->
-                <div class="bg-blue-50/80 border border-blue-200/80 rounded-2xl p-4 flex items-start space-x-3 text-xs text-blue-800">
+                <div class="bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/60 rounded-2xl p-4 flex items-start space-x-3 text-xs text-blue-800 dark:text-blue-300">
                     <svg class="w-5 h-5 text-blue-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                     <div class="space-y-1">
                         <p class="font-bold text-sm">OpenClash 流量监控系统管理</p>
-                        <p class="text-blue-700/90 leading-relaxed">
+                        <p class="text-blue-700/90 dark:text-blue-300/80 leading-relaxed">
                             支持灵活设定历史流量持久化策略、随时切换监控的目标旁路由或 OpenClash 客户端，并提供访问控制以防止未经授权的局域网访问。
                         </p>
                     </div>
                 </div>
 
                 <!-- 模块 1: 数据储存与清理策略 -->
-                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+                <div class="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-xs overflow-hidden transition-colors">
                     <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                         <div class="flex items-center space-x-3">
-                            <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                            <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/20 flex items-center justify-center font-bold transition-colors">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1.5 3 3.5 3h9c2 0 3.5-1 3.5-3V7c0-2-1.5-3-3.5-3h-9C5.5 4 4 5 4 7zm0 5h16M9 4v16"></path>
                                 </svg>
@@ -1097,7 +1097,7 @@
                         <div class="border-t border-slate-100 dark:border-slate-800 pt-5">
                             <label class="block text-xs font-bold text-slate-800 mb-2">自动清理与历史数据保留周期</label>
                             <div class="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
-                                <select v-model.number="retentionDays" class="text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <select v-model.number="retentionDays" class="text-xs bg-slate-50 dark:bg-[#1A2234] border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
                                     <option :value="30">保留最近 30 天 (推荐小型路由/U盘)</option>
                                     <option :value="60">保留最近 60 天</option>
                                     <option :value="90">保留最近 90 天 (默认均衡设置)</option>
@@ -1133,10 +1133,10 @@
                 </div>
 
                 <!-- 模块 2: 目标 OpenClash / 旁路由连接设置 -->
-                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+                <div class="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-xs overflow-hidden transition-colors">
                     <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                         <div class="flex items-center space-x-3">
-                            <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                            <div class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20 flex items-center justify-center font-bold transition-colors">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                 </svg>
@@ -1155,17 +1155,17 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-xs font-semibold text-slate-700 mb-1">旁路由 / OpenClash IP 地址</label>
-                                <input v-model="clashConfig.host" placeholder="127.0.0.1 或 旁路由IP" class="w-full text-xs font-mono bg-slate-50 text-slate-800 px-3 py-2 rounded-xl border border-slate-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input v-model="clashConfig.host" placeholder="127.0.0.1 或 旁路由IP" class="w-full text-xs font-mono bg-slate-50 dark:bg-[#1A2234] text-slate-800 dark:text-slate-100 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 focus:bg-white dark:focus:bg-[#1A2234] focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
                                 <p class="text-[11px] text-slate-400 mt-1">若与 OpenClash 同机部署请填 127.0.0.1</p>
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-700 mb-1">External Controller API 端口</label>
-                                <input v-model.number="clashConfig.port" placeholder="9090" class="w-full text-xs font-mono bg-slate-50 text-slate-800 px-3 py-2 rounded-xl border border-slate-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input v-model.number="clashConfig.port" placeholder="9090" class="w-full text-xs font-mono bg-slate-50 dark:bg-[#1A2234] text-slate-800 dark:text-slate-100 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 focus:bg-white dark:focus:bg-[#1A2234] focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
                                 <p class="text-[11px] text-slate-400 mt-1">OpenClash 外部控制默认端口 9090</p>
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-700 mb-1">RESTful 访问密钥 (Secret)</label>
-                                <input v-model="clashConfig.secret" type="password" placeholder="未设置可留空" class="w-full text-xs font-mono bg-slate-50 text-slate-800 px-3 py-2 rounded-xl border border-slate-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input v-model="clashConfig.secret" type="password" placeholder="未设置可留空" class="w-full text-xs font-mono bg-slate-50 dark:bg-[#1A2234] text-slate-800 dark:text-slate-100 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 focus:bg-white dark:focus:bg-[#1A2234] focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
                                 <p class="text-[11px] text-slate-400 mt-1">OpenClash 全局设置中的 Controller Secret</p>
                             </div>
                         </div>
@@ -1185,10 +1185,10 @@
                 </div>
 
                 <!-- 模块 3: 安全与访问控制 -->
-                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+                <div class="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-xs overflow-hidden transition-colors">
                     <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                         <div class="flex items-center space-x-3">
-                            <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                            <div class="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-500/20 flex items-center justify-center font-bold transition-colors">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                                 </svg>
@@ -1207,7 +1207,7 @@
 
                     <div class="p-6 space-y-5">
                         <!-- 开启/关闭切换 -->
-                        <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200/70">
+                        <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-[#1A2234]/70 rounded-xl border border-slate-200/70 dark:border-slate-800">
                             <div>
                                 <div class="text-xs font-bold text-slate-800">启用管理访问密码</div>
                                 <div class="text-[11px] text-slate-500 mt-0.5">开启后，访问本监控面板或调用后台 API 必须输入正确密码</div>
@@ -1222,11 +1222,11 @@
                         <div v-if="authSettings.enabled" class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
                             <div>
                                 <label class="block text-xs font-semibold text-slate-700 mb-1">设置新访问密码</label>
-                                <input v-model="authSettings.newPassword" type="password" placeholder="留空则保持原密码不变" class="w-full text-xs bg-slate-50 text-slate-800 px-3 py-2 rounded-xl border border-slate-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input v-model="authSettings.newPassword" type="password" placeholder="留空则保持原密码不变" class="w-full text-xs bg-slate-50 dark:bg-[#1A2234] text-slate-800 dark:text-slate-100 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 focus:bg-white dark:focus:bg-[#1A2234] focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-700 mb-1">再次确认新密码</label>
-                                <input v-model="authSettings.confirmPassword" type="password" placeholder="重复输入一次新密码" class="w-full text-xs bg-slate-50 text-slate-800 px-3 py-2 rounded-xl border border-slate-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input v-model="authSettings.confirmPassword" type="password" placeholder="重复输入一次新密码" class="w-full text-xs bg-slate-50 dark:bg-[#1A2234] text-slate-800 dark:text-slate-100 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 focus:bg-white dark:focus:bg-[#1A2234] focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
                             </div>
                         </div>
 
@@ -1330,7 +1330,13 @@
                     document.documentElement.classList.remove('dark');
                     localStorage.setItem('op_traffic_theme', 'light');
                 }
+                // 销毁旧实例，使用对应新主题完全重新渲染所有图表
+                Object.keys(charts).forEach(id => {
+                    try { charts[id].dispose(); } catch(e){}
+                });
+                charts = {};
                 nextTick(() => {
+                    fetchRealtimeSpeed();
                     renderTabCharts(currentTab.value);
                 });
             }
@@ -1552,7 +1558,7 @@
                 const dom = document.getElementById(domId);
                 if (!dom) return null;
                 if (!charts[domId]) {
-                    const inst = echarts.init(dom, null, { renderer: 'canvas' });
+                    const inst = echarts.init(dom, isDark.value ? 'dark' : null, { renderer: 'canvas' });
                     charts[domId] = inst;
                     const ro = new ResizeObserver(() => {
                         if (dom.clientWidth > 50) {
@@ -1893,10 +1899,15 @@
                 const downs = historyList.map(h => h.down);
                 const ups = historyList.map(h => h.up);
 
+                const isD = isDark.value;
                 chart.setOption({
+                    backgroundColor: 'transparent',
                     animation: false,
                     tooltip: {
                         trigger: 'axis',
+                        backgroundColor: isD ? '#1e293b' : '#ffffff',
+                        borderColor: isD ? '#334155' : '#e2e8f0',
+                        textStyle: { color: isD ? '#f8fafc' : '#0f172a' },
                         formatter: function(params) {
                             let str = `<div class="text-xs font-mono"><b>${params[0].axisValue}</b><br/>`;
                             params.forEach(p => {
@@ -1907,19 +1918,19 @@
                             return str;
                         }
                     },
-                    legend: { data: ['下行速率', '上行速率'], right: '2%', top: '0%' },
+                    legend: { data: ['下行速率', '上行速率'], right: '2%', top: '0%', textStyle: { color: isD ? '#94a3b8' : '#64748b' } },
                     grid: { left: '2%', right: '3%', bottom: '3%', top: '15%', containLabel: true },
                     xAxis: {
                         type: 'category',
                         boundaryGap: false,
                         data: times,
-                        axisLine: { lineStyle: { color: isDark.value ? '#334155' : '#e2e8f0' } },
-                        axisLabel: { color: isDark.value ? '#94a3b8' : '#64748b', fontSize: 11 }
+                        axisLine: { lineStyle: { color: isD ? '#334155' : '#e2e8f0' } },
+                        axisLabel: { color: isD ? '#94a3b8' : '#64748b', fontSize: 11 }
                     },
                     yAxis: {
                         type: 'value',
-                        splitLine: { lineStyle: { color: isDark.value ? '#1e293b' : '#f1f5f9', type: 'dashed' } },
-                        axisLabel: { color: isDark.value ? '#94a3b8' : '#64748b', fontSize: 11, formatter: (v) => formatSpeed(v) }
+                        splitLine: { lineStyle: { color: isD ? '#1e293b' : '#f1f5f9', type: 'dashed' } },
+                        axisLabel: { color: isD ? '#94a3b8' : '#64748b', fontSize: 11, formatter: (v) => formatSpeed(v) }
                     },
                     series: [
                         {
@@ -1955,18 +1966,33 @@
             }
 
             function renderTabCharts(tabKey) {
+                const isD = isDark.value;
+                const textColor = isD ? '#94a3b8' : '#64748b';
+                const lineColor = isD ? '#334155' : '#e2e8f0';
+                const splitColor = isD ? '#1e293b' : '#f1f5f9';
+                const tooltipBg = isD ? '#1e293b' : '#ffffff';
+                const tooltipBorder = isD ? '#334155' : '#e2e8f0';
+                const tooltipText = isD ? '#f8fafc' : '#0f172a';
+
                 if (tabKey === 'overview') {
                     const pChart = getChart('devicePieChart');
                     if (pChart) {
                         const pieData = devices.value.map(d => ({ name: d.name, value: d.total }));
                         pChart.setOption({
-                            tooltip: { trigger: 'item', formatter: (p) => `${p.name}<br/><b>${formatBytes(p.value)}</b> (${p.percent}%)` },
-                            legend: { bottom: '0%', left: 'center', type: 'scroll' },
+                            backgroundColor: 'transparent',
+                            tooltip: { 
+                                trigger: 'item', 
+                                backgroundColor: tooltipBg,
+                                borderColor: tooltipBorder,
+                                textStyle: { color: tooltipText },
+                                formatter: (p) => `${p.name}<br/><b>${formatBytes(p.value)}</b> (${p.percent}%)` 
+                            },
+                            legend: { bottom: '0%', left: 'center', type: 'scroll', textStyle: { color: textColor } },
                             series: [{
                                 type: 'pie',
                                 radius: ['45%', '70%'],
                                 center: ['50%', '45%'],
-                                itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
+                                itemStyle: { borderRadius: 8, borderColor: isD ? '#111827' : '#fff', borderWidth: 2 },
                                 data: pieData.length ? pieData : [{ name: '暂无数据', value: 0 }]
                             }]
                         });
@@ -1975,10 +2001,26 @@
                     if (bChart) {
                         const topNodes = nodes.value.slice(0, 8).reverse();
                         bChart.setOption({
-                            tooltip: { trigger: 'axis', formatter: (p) => `${p[0].name}<br/>消耗: <b>${formatBytes(p[0].value)}</b>` },
+                            backgroundColor: 'transparent',
+                            tooltip: { 
+                                trigger: 'axis', 
+                                backgroundColor: tooltipBg,
+                                borderColor: tooltipBorder,
+                                textStyle: { color: tooltipText },
+                                formatter: (p) => `${p[0].name}<br/>消耗: <b>${formatBytes(p[0].value)}</b>` 
+                            },
                             grid: { left: '3%', right: '8%', bottom: '3%', top: '3%', containLabel: true },
-                            xAxis: { type: 'value', axisLabel: { formatter: (v) => formatBytes(v) } },
-                            yAxis: { type: 'category', data: topNodes.map(n => n.node), axisLabel: { width: 140, overflow: 'truncate' } },
+                            xAxis: { 
+                                type: 'value', 
+                                axisLabel: { formatter: (v) => formatBytes(v), color: textColor },
+                                splitLine: { lineStyle: { color: splitColor, type: 'dashed' } }
+                            },
+                            yAxis: { 
+                                type: 'category', 
+                                data: topNodes.map(n => n.node), 
+                                axisLabel: { width: 140, overflow: 'truncate', color: textColor },
+                                axisLine: { lineStyle: { color: lineColor } }
+                            },
                             series: [{ type: 'bar', data: topNodes.map(n => n.total), itemStyle: { borderRadius: [0, 6, 6, 0], color: '#3b82f6' } }]
                         });
                     }
@@ -1987,14 +2029,30 @@
                     if (chart) {
                         const topDev = devices.value.slice(0, 8);
                         chart.setOption({
-                            tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-                            legend: { right: '3%' },
+                            backgroundColor: 'transparent',
+                            tooltip: { 
+                                trigger: 'axis', 
+                                axisPointer: { type: 'shadow' },
+                                backgroundColor: tooltipBg,
+                                borderColor: tooltipBorder,
+                                textStyle: { color: tooltipText }
+                            },
+                            legend: { right: '3%', textStyle: { color: textColor } },
                             grid: { left: '3%', right: '4%', bottom: '3%', top: '15%', containLabel: true },
-                            xAxis: { type: 'category', data: topDev.map(d => d.name), axisLabel: { interval: 0, rotate: 15 } },
-                            yAxis: { type: 'value', axisLabel: { formatter: (v) => formatBytes(v) } },
+                            xAxis: { 
+                                type: 'category', 
+                                data: topDev.map(d => d.name), 
+                                axisLabel: { interval: 0, rotate: 15, color: textColor },
+                                axisLine: { lineStyle: { color: lineColor } }
+                            },
+                            yAxis: { 
+                                type: 'value', 
+                                axisLabel: { formatter: (v) => formatBytes(v), color: textColor },
+                                splitLine: { lineStyle: { color: splitColor, type: 'dashed' } }
+                            },
                             series: [
                                 { name: '下行', type: 'bar', data: topDev.map(d => d.download), itemStyle: { color: '#3b82f6', borderRadius: [4, 4, 0, 0] } },
-                                { name: '上行', type: 'bar', data: topDev.map(d => d.upload), itemStyle: { color: '#6366f1', borderRadius: [4, 4, 0, 0] } }
+                                { name: '上行', type: 'bar', data: topDev.map(d => d.upload), itemStyle: { color: '#818cf8', borderRadius: [4, 4, 0, 0] } }
                             ]
                         });
                     }
@@ -2003,10 +2061,25 @@
                     if (chart) {
                         const topN = nodes.value.slice(0, 8).reverse();
                         chart.setOption({
-                            tooltip: { trigger: 'axis' },
+                            backgroundColor: 'transparent',
+                            tooltip: { 
+                                trigger: 'axis',
+                                backgroundColor: tooltipBg,
+                                borderColor: tooltipBorder,
+                                textStyle: { color: tooltipText }
+                            },
                             grid: { left: '3%', right: '8%', bottom: '3%', top: '3%', containLabel: true },
-                            xAxis: { type: 'value', axisLabel: { formatter: (v) => formatBytes(v) } },
-                            yAxis: { type: 'category', data: topN.map(n => n.node), axisLabel: { width: 160, overflow: 'truncate' } },
+                            xAxis: { 
+                                type: 'value', 
+                                axisLabel: { formatter: (v) => formatBytes(v), color: textColor },
+                                splitLine: { lineStyle: { color: splitColor, type: 'dashed' } }
+                            },
+                            yAxis: { 
+                                type: 'category', 
+                                data: topN.map(n => n.node), 
+                                axisLabel: { width: 160, overflow: 'truncate', color: textColor },
+                                axisLine: { lineStyle: { color: lineColor } }
+                            },
                             series: [{ type: 'bar', data: topN.map(n => n.total), itemStyle: { color: '#0ea5e9', borderRadius: [0, 6, 6, 0] } }]
                         });
                     }
@@ -2015,10 +2088,26 @@
                     if (chart) {
                         const topD = domains.value.slice(0, 10).reverse();
                         chart.setOption({
-                            tooltip: { trigger: 'axis', formatter: (p) => `${p[0].name}<br/>消耗: <b>${formatBytes(p[0].value)}</b>` },
+                            backgroundColor: 'transparent',
+                            tooltip: { 
+                                trigger: 'axis', 
+                                backgroundColor: tooltipBg,
+                                borderColor: tooltipBorder,
+                                textStyle: { color: tooltipText },
+                                formatter: (p) => `${p[0].name}<br/>消耗: <b>${formatBytes(p[0].value)}</b>` 
+                            },
                             grid: { left: '3%', right: '8%', bottom: '3%', top: '3%', containLabel: true },
-                            xAxis: { type: 'value', axisLabel: { formatter: (v) => formatBytes(v) } },
-                            yAxis: { type: 'category', data: topD.map(d => d.host), axisLabel: { width: 180, overflow: 'truncate', fontFamily: 'monospace' } },
+                            xAxis: { 
+                                type: 'value', 
+                                axisLabel: { formatter: (v) => formatBytes(v), color: textColor },
+                                splitLine: { lineStyle: { color: splitColor, type: 'dashed' } }
+                            },
+                            yAxis: { 
+                                type: 'category', 
+                                data: topD.map(d => d.host), 
+                                axisLabel: { width: 180, overflow: 'truncate', fontFamily: 'monospace', color: textColor },
+                                axisLine: { lineStyle: { color: lineColor } }
+                            },
                             series: [{ type: 'bar', data: topD.map(d => d.total), itemStyle: { color: '#8b5cf6', borderRadius: [0, 6, 6, 0] } }]
                         });
                     }
@@ -2029,10 +2118,25 @@
                     if (chart) {
                         const topR = rules.value.slice(0, 10).reverse();
                         chart.setOption({
-                            tooltip: { trigger: 'axis' },
+                            backgroundColor: 'transparent',
+                            tooltip: { 
+                                trigger: 'axis',
+                                backgroundColor: tooltipBg,
+                                borderColor: tooltipBorder,
+                                textStyle: { color: tooltipText }
+                            },
                             grid: { left: '3%', right: '8%', bottom: '3%', top: '3%', containLabel: true },
-                            xAxis: { type: 'value', axisLabel: { formatter: (v) => formatBytes(v) } },
-                            yAxis: { type: 'category', data: topR.map(r => r.rule), axisLabel: { width: 160, overflow: 'truncate' } },
+                            xAxis: { 
+                                type: 'value', 
+                                axisLabel: { formatter: (v) => formatBytes(v), color: textColor },
+                                splitLine: { lineStyle: { color: splitColor, type: 'dashed' } }
+                            },
+                            yAxis: { 
+                                type: 'category', 
+                                data: topR.map(r => r.rule), 
+                                axisLabel: { width: 160, overflow: 'truncate', color: textColor },
+                                axisLine: { lineStyle: { color: lineColor } }
+                            },
                             series: [{ type: 'bar', data: topR.map(r => r.total), itemStyle: { color: '#10b981', borderRadius: [0, 6, 6, 0] } }]
                         });
                     }
@@ -2042,6 +2146,14 @@
             function renderLiveChart() {
                 const chart = getChart('livePageChart');
                 if (!chart) return;
+                const isD = isDark.value;
+                const textColor = isD ? '#94a3b8' : '#64748b';
+                const lineColor = isD ? '#334155' : '#e2e8f0';
+                const splitColor = isD ? '#1e293b' : '#f1f5f9';
+                const tooltipBg = isD ? '#1e293b' : '#ffffff';
+                const tooltipBorder = isD ? '#334155' : '#e2e8f0';
+                const tooltipText = isD ? '#f8fafc' : '#0f172a';
+
                 const devCounts = {};
                 liveList.value.forEach(c => {
                     const dev = c.device_name || c.source_ip;
@@ -2051,10 +2163,28 @@
                 const values = Object.values(devCounts);
 
                 chart.setOption({
-                    tooltip: { trigger: 'axis' },
+                    backgroundColor: 'transparent',
+                    tooltip: { 
+                        trigger: 'axis',
+                        backgroundColor: tooltipBg,
+                        borderColor: tooltipBorder,
+                        textStyle: { color: tooltipText }
+                    },
                     grid: { left: '3%', right: '3%', bottom: '3%', top: '15%', containLabel: true },
-                    xAxis: { type: 'category', data: labels.length ? labels : ['暂无连接'], axisLabel: { interval: 0 } },
-                    yAxis: { type: 'value', minInterval: 1, name: '并发路数' },
+                    xAxis: { 
+                        type: 'category', 
+                        data: labels.length ? labels : ['暂无连接'], 
+                        axisLabel: { interval: 0, color: textColor },
+                        axisLine: { lineStyle: { color: lineColor } }
+                    },
+                    yAxis: { 
+                        type: 'value', 
+                        minInterval: 1, 
+                        name: '并发路数',
+                        nameTextStyle: { color: textColor },
+                        axisLabel: { color: textColor },
+                        splitLine: { lineStyle: { color: splitColor, type: 'dashed' } }
+                    },
                     series: [{ type: 'bar', data: values.length ? values : [0], barMaxWidth: 40, itemStyle: { color: '#10b981', borderRadius: [6, 6, 0, 0] } }]
                 });
             }

@@ -60,7 +60,7 @@ docker run -d \
   --restart unless-stopped \
   --network host \
   -v /path/to/your/data:/app/data \
-  clash-traffic-monitor:latest
+  ghcr.io/lawzhougc/clash-traffic-monitor:latest
 ```
 
 > **提示**：如果宿主机的 8099 端口未冲突，使用 `--network host` 可直接访问本机 127.0.0.1:9090 的 OpenClash 控制器，并打开 `http://<路由器IP>:8099` 访问监控大屏。
@@ -76,7 +76,7 @@ version: '3.8'
 
 services:
   clash-traffic-monitor:
-    image: clash-traffic-monitor:latest
+    image: ghcr.io/lawzhougc/clash-traffic-monitor:latest
     build: .
     container_name: clash-traffic-monitor
     restart: unless-stopped
