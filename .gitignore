@@ -9,5 +9,6 @@ refine_*.py
 fix_*.py
 test_*.py
 data/
+dist/
 .vscode/
 .idea/
